@@ -89,10 +89,10 @@ SCENARIOS = {
 
 # NOTE: Users need to update these paths to point to their actual data files
 DATA_PATHS = {
-    'bau': r"yourpath\7.diets\bau\1.ALL_COUNTRIES_annual_projections_2020_2050.csv",
-    'fat': r"yourpath\7.diets\fat\ALL_COUNTRIES_fat_annual_projections_2020_2050.csv",
-    'eat': r"yourpath\7.diets\eat\ALL_COUNTRIES_eat_annual_projections_2020_2050.csv",
-    'ndc': r"yourpath\7.diets\ndc\ALL_COUNTRIES_ndc_annual_projections_2020_2050.csv",
+    'bau': r"data\7.diets\bau\1.ALL_COUNTRIES_annual_projections_2020_2050.csv",
+    'fat': r"data\7.diets\fat\ALL_COUNTRIES_fat_annual_projections_2020_2050.csv",
+    'eat': r"data\7.diets\eat\ALL_COUNTRIES_eat_annual_projections_2020_2050.csv",
+    'ndc': r"data\7.diets\ndc\ALL_COUNTRIES_ndc_annual_projections_2020_2050.csv",
 }
 
 # ============================================================================
