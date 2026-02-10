@@ -4,7 +4,7 @@ LandGCH Interactive Dashboard
 A Streamlit application for exploring global land-use projections (2020-2050)
 using HILDA+ data and Time-varying Markov Chain models.
 
-Author: Angelos
+Author: Angelos  
 Date: December 2024
 """
 
@@ -28,6 +28,80 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Custom CSS - Modern styling with logo support
+st.markdown("""
+<style>
+    /* Hide auto-generated navigation */
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    
+    /* Global styling */
+    .stApp { background-color: #F8FAFC; }
+    .block-container { padding-top: 1.5rem !important; max-width: 1200px; }
+
+    /* Headers */
+    h1 { font-size: 1.7rem !important; font-weight: 800; color: #0F172A; margin-bottom: 0.5rem !important; }
+    h2 { font-size: 1.3rem !important; font-weight: 700; color: #1E293B; margin-top: 1rem !important; border-bottom: none !important; }
+    h3 { font-size: 1.0rem !important; font-weight: 600; color: #475569; }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] { 
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+        border-right: 2px solid #e0e0e0;
+    }
+    
+    [data-testid="stSidebar"] img {
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 1rem;
+    }
+    
+    /* Compact inputs */
+    .stNumberInput input { font-size: 0.85rem !important; padding: 0.4rem !important; }
+    .element-container { margin-bottom: 0.5rem !important; }
+    
+    /* Navigation styling */
+    [data-testid="stSidebar"] .stRadio > div {
+        background: linear-gradient(180deg, #f0f2f6 0%, #ffffff 100%);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 2px solid #e0e0e0;
+    }
+    
+    [data-testid="stSidebar"] .stRadio label {
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 0.5rem;
+    }
+    
+    /* Page links styling */
+    [data-testid="stSidebar"] a[data-testid="stPageLink"] {
+        display: block;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.5rem;
+        background-color: rgba(31, 119, 180, 0.1);
+        border: 2px solid rgba(31, 119, 180, 0.2);
+        color: #1f77b4;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    [data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
+        background-color: rgba(31, 119, 180, 0.2);
+        border-color: rgba(31, 119, 180, 0.4);
+    }
+    
+    [data-testid="stSidebar"] a[data-testid="stPageLink"][aria-current="page"] {
+        background-color: #1f77b4;
+        color: white;
+        border-color: #1f77b4;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================================================
 # CONSTANTS & CONFIGURATION
@@ -262,26 +336,32 @@ def create_2050_comparison_bar(country_dfs, country_code):
 def main():
     """Main application logic"""
     
-    # Sidebar navigation
-    st.sidebar.title("🌍 LandGCH Dashboard")
-    st.sidebar.markdown("---")
-    
-    page = st.sidebar.radio(
-        "Navigation",
-        ["🏠 Home", "🔍 Country Explorer", "📊 Scenario Comparison"],
-        label_visibility="collapsed"
-    )
-    
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("""
-    **About LandGCH**
-    
-    Global land-use forecasting model combining:
-    - HILDA+ v2.0 (1960-2020)
-    - Time-varying Markov Chains
-    - Multiple dietary scenarios
-    - Country-specific dynamics
-    """)
+    # Sidebar with logo and navigation
+    with st.sidebar:
+        # Logo first
+        st.image("https://unsdsn.globalclimatehub.org/wp-content/uploads/2022/09/logo.png", width=200)
+        
+        st.title("🌍 LandGCH Dashboard")
+        st.markdown("---")
+        
+        # Navigation
+        page = st.radio(
+            "Navigation",
+            ["🏠 Home", "🔍 Country Explorer", "📊 Scenario Comparison", "🔬 Custom Model"],
+            label_visibility="collapsed"
+        )
+        
+        st.markdown("---")
+        
+        st.markdown("""
+        **About LandGCH**
+        
+        Global land-use forecasting model combining:
+        - HILDA+ v2.0 (1960-2020)
+        - Time-varying Markov Chains
+        - Multiple dietary scenarios
+        - Country-specific dynamics
+        """)
     
     # Page routing
     if page == "🏠 Home":
@@ -290,6 +370,8 @@ def main():
         show_country_explorer()
     elif page == "📊 Scenario Comparison":
         show_scenario_comparison()
+    elif page == "🔬 Custom Model":
+        st.switch_page("pages/4_custom_model.py")
 
 # ============================================================================
 # PAGE 1: HOME

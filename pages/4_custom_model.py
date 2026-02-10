@@ -81,37 +81,204 @@ DEFAULT_LAND_USES = ['Crops', 'TreeCrops', 'Forest', 'Grassland', 'Urban', 'Wate
 st.set_page_config(
     page_title="Custom Model Builder",
     page_icon="🔬",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# Custom CSS
+st.markdown("""
+<style>
+    /* HIDE the auto-generated navigation */
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    
+    /* Better headers */
+    .main h1 {
+        color: #1f77b4;
+        font-weight: 600;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid #1f77b4;
+    }
+    
+    .main h2 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-top: 2rem;
+        padding: 0.5rem 0;
+    }
+    
+    .main h3 {
+        color: #34495e;
+        font-weight: 500;
+    }
+    
+    /* Better info boxes */
+    .stAlert {
+        border-radius: 0.5rem;
+    }
+    
+    /* Better buttons */
+    .stButton>button {
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+    
+    /* Better metrics */
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    /* Section dividers */
+    .section-header {
+        background: linear-gradient(90deg, #f0f2f6 0%, #ffffff 100%);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0 1rem 0;
+        border-left: 4px solid #1f77b4;
+    }
+    
+    .section-header h3 {
+        margin: 0;
+        color: #1f77b4;
+    }
+    
+    .section-header p {
+        margin: 0.5rem 0 0 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+        border-right: 2px solid #e0e0e0;
+    }
+    
+    [data-testid="stSidebar"] img {
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 1rem;
+    }
+    
+    [data-testid="stSidebar"] h3 {
+        color: #1f77b4;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    /* Custom navigation links styling */
+    [data-testid="stSidebar"] a[data-testid="stPageLink"] {
+        display: block;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.5rem;
+        background-color: rgba(31, 119, 180, 0.1);
+        border: 2px solid rgba(31, 119, 180, 0.2);
+        color: #1f77b4;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    [data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
+        background-color: rgba(31, 119, 180, 0.2);
+        border-color: rgba(31, 119, 180, 0.4);
+    }
+    
+    [data-testid="stSidebar"] a[data-testid="stPageLink"][aria-current="page"] {
+        background-color: #1f77b4;
+        color: white;
+        border-color: #1f77b4;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 st.title("🔬 Custom Model Builder")
 
 st.markdown("""
-**Two-Stage Process:**
-1. **Stage 1:** Run base projection with transition matrix → Get 2050 results
-2. **Stage 2:** Apply scenario multipliers to adjust 2050 results
+<div style='background-color: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;'>
+    <p style='margin: 0; color: #495057; font-size: 0.95rem;'>
+    <strong>Two-Stage Process:</strong> 
+    <span style='color: #1f77b4;'>①</span> Run base projection with transition matrix → 
+    <span style='color: #1f77b4;'>②</span> Apply scenario multipliers to adjust results
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
----
-""")
+# Sidebar Progress Tracker
+with st.sidebar:
+    # Logo FIRST
+    st.image("https://unsdsn.globalclimatehub.org/wp-content/uploads/2022/09/logo.png", width=200)
+    
+    # Navigation - only working pages
+    st.markdown("### 📍 Navigation")
+    st.page_link("landgch_app.py", label="🏠 Home")
+    st.page_link("pages/4_custom_model.py", label="🔬 Custom Model")
+    
+    st.markdown("### 🚀 Workflow Progress")
+    st.markdown("---")
+    
+    # Track progress
+    progress_items = []
+    
+    # Will be updated as we go through the workflow
+    st.markdown("#### Stage 1: Base Projection")
+    if 'baseline_2020' in locals() and baseline_2020 is not None:
+        st.success("✅ Baseline loaded")
+    else:
+        st.info("⏳ Load baseline")
+    
+    if 'matrix' in locals() and matrix is not None:
+        st.success("✅ Matrix ready")
+    else:
+        st.info("⏳ Provide matrix")
+    
+    if 'base_results' in st.session_state:
+        st.success("✅ Base projection complete")
+    else:
+        st.info("⏳ Run projection")
+    
+    st.markdown("#### Stage 2: Adjustment")
+    if 'adj_2050' in st.session_state:
+        st.success("✅ Multipliers applied")
+    else:
+        st.info("⏳ Apply multipliers")
+    
+    st.markdown("---")
+    st.caption("💡 Complete steps in order")
 
 # ============================================================================
 # STAGE 1: BASE PROJECTION
 # ============================================================================
 
-st.header("📊 Stage 1: Base Projection")
+st.markdown("""
+<div class='section-header'>
+    <h3>📊 Stage 1: Base Projection</h3>
+    <p>Create your baseline land-use projection using transition matrices</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ----------------------------------------------------------------------------
 # 1.1 Country Selection & Baseline Loading
 # ----------------------------------------------------------------------------
 
-st.subheader("1.1 Country & Baseline Data")
+st.markdown("#### 1.1 Country & Baseline Data")
 
-country = st.text_input(
-    "Country Code (ISO3)",
-    value="BRA",
-    max_chars=3,
-    help="3-letter country code"
-).upper()
+col1, col2, col3 = st.columns([1, 1, 1])
+
+with col1:
+    country = st.text_input(
+        "Country Code (ISO3)",
+        value="BRA",
+        max_chars=3,
+        help="3-letter country code (e.g., BRA, USA, NOR)"
+    ).upper()
 
 # Load baseline data from fixed location
 baseline_data = None
@@ -149,16 +316,22 @@ for baseline_path in baseline_paths:
                 
                 total_area = sum(baseline_2020.values())
                 
-                st.success(f"✅ Loaded baseline for {country} (2020) - Total: {total_area:,.0f} km²")
+                # Nice metric display
+                with col2:
+                    st.metric("📅 Base Year", "2020")
+                with col3:
+                    st.metric("🌍 Total Area", f"{total_area:,.0f} km²")
                 
-                with st.expander("📊 View 2020 Baseline Data"):
+                st.success(f"✅ Loaded baseline for **{country}**")
+                
+                with st.expander("📊 View 2020 Baseline Details"):
                     baseline_df = pd.DataFrame([baseline_2020])
-                    st.dataframe(baseline_df.T.rename(columns={0: 'Area (km²)'}))
+                    st.dataframe(baseline_df.T.rename(columns={0: 'Area (km²)'}), width="content")
                 
                 baseline_loaded = True
                 break
             else:
-                st.error(f"❌ No data found for country {country} in year 2020")
+                st.error(f"❌ No data found for country **{country}** in year 2020")
                 baseline_loaded = True
                 break
         except Exception as e:
@@ -174,13 +347,13 @@ if not baseline_loaded:
     Create the `data/` directory if it doesn't exist.
     """)
 
-st.divider()
+st.markdown("---")
 
 # ----------------------------------------------------------------------------
 # 1.2 Land Use Configuration
 # ----------------------------------------------------------------------------
 
-st.subheader("1.2 Land Use Configuration")
+st.markdown("#### 1.2 Land Use Configuration")
 
 use_default = st.radio(
     "Land use types:",
@@ -238,7 +411,7 @@ else:
     
     # Confirm button
     st.markdown("---")
-    if st.button("✓ Confirm Land Uses", type="primary", use_container_width=False):
+    if st.button("✓ Confirm Land Uses", type="primary", width="content"):
         st.session_state['custom_num_land_uses'] = num_land_uses
         st.session_state['custom_land_use_names'] = temp_land_uses
         st.session_state['custom_baseline_areas'] = temp_baseline_areas
@@ -255,13 +428,13 @@ else:
     if len(baseline_areas) > 0:
         st.metric("Total Baseline Area", f"{baseline_areas.sum():,.0f} km²")
 
-st.divider()
+st.markdown("---")
 
 # ----------------------------------------------------------------------------
 # 1.3 Transition Matrix
 # ----------------------------------------------------------------------------
 
-st.subheader("1.3 Transition Matrix")
+st.markdown("#### 1.3 Transition Matrix")
 
 if baseline_areas is not None:
     n = len(land_uses)
@@ -382,8 +555,8 @@ if baseline_areas is not None:
                     return 'background-color: #d4edda' if abs(val - 1.0) < 0.01 else 'background-color: #f8d7da'
                 return ''
             
-            styled = matrix_df.style.applymap(highlight_sums, subset=['Row Sum']).format('{:.4f}')
-            st.dataframe(styled, use_container_width=True)
+            styled = matrix_df.style.map(highlight_sums, subset=['Row Sum']).format('{:.4f}')
+            st.dataframe(styled, width="stretch")
             
             valid, errors = validate_transition_matrix(matrix)
             if valid:
@@ -392,13 +565,13 @@ if baseline_areas is not None:
                 for error in errors:
                     st.error(f"❌ {error}")
 
-st.divider()
+st.markdown("---")
 
 # ----------------------------------------------------------------------------
 # 1.4 Run Base Projection
 # ----------------------------------------------------------------------------
 
-st.subheader("1.4 Run Base Projection")
+st.markdown("#### 1.4 Run Base Projection")
 
 can_run = baseline_areas is not None and matrix is not None and len(land_uses) > 0 and matrix.shape[0] == len(land_uses)
 
@@ -406,8 +579,8 @@ if can_run:
     valid_matrix, _ = validate_transition_matrix(matrix)
     
     if valid_matrix:
-        if st.button("🚀 Run Stage 1", type="primary", use_container_width=True):
-            with st.spinner("Running..."):
+        if st.button("🚀 Run Stage 1: Base Projection", type="primary", width="stretch"):
+            with st.spinner("Running projection..."):
                 try:
                     results = run_custom_projection(country, matrix, land_uses, baseline_areas)
                     
@@ -415,57 +588,96 @@ if can_run:
                     st.session_state['land_uses'] = land_uses
                     st.session_state['use_default_types'] = use_default_types
                     
-                    st.success("✅ Done!")
+                    st.success("✅ Base projection complete!")
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
 
 # Show Base Results
 if 'base_results' in st.session_state:
-    st.divider()
-    st.subheader("📊 Base Projection Results")
+    st.markdown("---")
+    st.markdown("""
+    <div class='section-header'>
+        <h3>📊 Base Projection Results</h3>
+        <p>Land-use trajectories from 2020 to 2050</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     results = st.session_state['base_results']
     land_uses = st.session_state['land_uses']
     
+    # Area conservation check
     total_2020 = results[results['Year'] == 2020][land_uses].values[0].sum()
     total_2050 = results[results['Year'] == 2050][land_uses].values[0].sum()
     difference = total_2050 - total_2020
     
+    st.markdown("**🔍 Area Conservation Diagnostic:**")
+    
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("2020", f"{total_2020:,.0f} km²")
+        st.metric("Total Area 2020", f"{total_2020:,.0f} km²", delta=None)
     with col2:
-        st.metric("2050", f"{total_2050:,.0f} km²")
+        st.metric("Total Area 2050", f"{total_2050:,.0f} km²", delta=None)
     with col3:
-        st.metric("Diff", f"{difference:+,.0f} km²")
+        delta_color = "off" if abs(difference) < 1 else "normal"
+        st.metric("Difference", f"{difference:+,.0f} km²", delta=None)
     
     if abs(difference) < 1:
-        st.success("✅ Area conserved")
+        st.success("✅ **Perfect!** Total area is conserved.")
     elif difference > 0:
-        st.warning(f"⚠️ Exceeded by {abs(difference):,.0f} km². Reconsider smaller change percentages.")
+        st.warning(f"⚠️ Exceeded by **{abs(difference):,.0f} km²**. Reconsider smaller change percentages.")
     else:
-        st.warning(f"⚠️ Used less by {abs(difference):,.0f} km²")
+        st.warning(f"⚠️ Used less by **{abs(difference):,.0f} km²**")
+    
+    st.markdown("---")
+    st.markdown("**📈 Land-Use Trajectory (2020-2050)**")
     
     plot_data = results.melt(id_vars=['Country', 'Year'], var_name='Land_Use', value_name='Area')
-    fig = px.line(plot_data, x='Year', y='Area', color='Land_Use', height=400)
-    st.plotly_chart(fig, use_container_width=True)
+    fig = px.line(
+        plot_data, 
+        x='Year', 
+        y='Area', 
+        color='Land_Use',
+        color_discrete_sequence=px.colors.qualitative.Set2,
+        height=500
+    )
+    fig.update_layout(
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(size=12, family="sans-serif"),
+        hovermode='x unified',
+        legend=dict(
+            orientation="v",
+            yanchor="top",
+            y=1,
+            xanchor="left",
+            x=1.02,
+            title=dict(text="Land Use", font=dict(size=13, family="sans-serif"))
+        ),
+        margin=dict(l=50, r=150, t=50, b=50)
+    )
+    st.plotly_chart(fig, width="stretch")
 
 # ============================================================================
 # STAGE 2: SCENARIO ADJUSTMENT
 # ============================================================================
 
 if 'base_results' in st.session_state:
-    st.divider()
-    st.header("🎯 Stage 2: Scenario Adjustment")
+    st.markdown("---")
+    st.markdown("""
+    <div class='section-header'>
+        <h3>🎯 Stage 2: Scenario Adjustment</h3>
+        <p>Apply multipliers to adjust your 2050 projection results</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     results = st.session_state['base_results']
     land_uses = st.session_state['land_uses']
     use_default_types = st.session_state['use_default_types']
     
-    st.markdown("`2050 Adjusted = 2050 Base × Multipliers`")
+    st.markdown("`Formula: 2050 Adjusted = 2050 Base × Multipliers`")
     
-    st.subheader("2.1 Multipliers")
+    st.markdown("#### 2.1 Select Multipliers")
     
     if use_default_types:
         st.success("✅ Can select & edit scenarios")
@@ -527,10 +739,10 @@ if 'base_results' in st.session_state:
         
         multipliers = st.session_state['custom_mults']
     
-    st.divider()
-    st.subheader("2.2 Apply")
+    st.markdown("---")
+    st.markdown("#### 2.2 Apply Multipliers")
     
-    if st.button("🎯 Apply to 2050", type="primary", use_container_width=True):
+    if st.button("🎯 Apply Multipliers to 2050 Results", type="primary", width="stretch"):
         base_2050 = results[results['Year'] == 2050].copy()
         adj_2050 = base_2050.copy()
         
@@ -543,12 +755,19 @@ if 'base_results' in st.session_state:
         st.rerun()
     
     if 'adj_2050' in st.session_state:
-        st.divider()
-        st.subheader("📊 Adjusted Results")
+        st.markdown("---")
+        st.markdown("""
+        <div class='section-header'>
+            <h3>📊 Adjusted Results</h3>
+            <p>2050 projection with applied multipliers</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         base_2050 = results[results['Year'] == 2050]
         adj_2050 = st.session_state['adj_2050']
         mults = st.session_state['mults_applied']
+        
+        st.markdown("**Comparison: Base vs Adjusted 2050**")
         
         comp = []
         for lu in land_uses:
@@ -556,24 +775,28 @@ if 'base_results' in st.session_state:
             adj_val = adj_2050[lu].values[0]
             comp.append({
                 'Land Use': lu,
-                'Mult': f'{mults[lu]:.2f}',
-                'Base 2050': f'{base_val:,.0f}',
-                'Adjusted 2050': f'{adj_val:,.0f}',
-                'Change': f'{(adj_val - base_val):+,.0f}'
+                'Multiplier': f'{mults[lu]:.2f}',
+                'Base 2050 (km²)': f'{base_val:,.0f}',
+                'Adjusted 2050 (km²)': f'{adj_val:,.0f}',
+                'Change (km²)': f'{(adj_val - base_val):+,.0f}'
             })
         
-        st.dataframe(pd.DataFrame(comp), hide_index=True)
+        st.dataframe(pd.DataFrame(comp), hide_index=True, width="stretch")
         
         total_base = sum([base_2050[lu].values[0] for lu in land_uses])
         total_adj = sum([adj_2050[lu].values[0] for lu in land_uses])
         
+        st.markdown("**Total Area After Adjustment:**")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Base", f"{total_base:,.0f} km²")
+            st.metric("Base 2050", f"{total_base:,.0f} km²")
         with col2:
-            st.metric("Adjusted", f"{total_adj:,.0f} km²")
+            st.metric("Adjusted 2050", f"{total_adj:,.0f} km²")
         with col3:
-            st.metric("Δ", f"{(total_adj - total_base):+,.0f} km²")
+            st.metric("Change", f"{(total_adj - total_base):+,.0f} km²")
+        
+        st.markdown("---")
+        st.markdown("**📈 Full Trajectory with Adjusted 2050**")
         
         # Chart
         chart_data = []
@@ -585,19 +808,63 @@ if 'base_results' in st.session_state:
             chart_data.append({'Year': 2050, 'LU': f'{lu} (Adj)', 'Area': adj_2050[lu].values[0]})
         
         df = pd.DataFrame(chart_data)
-        fig = px.line(df[df['LU'].str.contains('Base')], x='Year', y='Area', color='LU', height=500)
+        fig = px.line(
+            df[df['LU'].str.contains('Base')], 
+            x='Year', 
+            y='Area', 
+            color='LU',
+            color_discrete_sequence=px.colors.qualitative.Set2,
+            height=550
+        )
         
         for lu in land_uses:
             lu_adj = df[df['LU'] == f'{lu} (Adj)']
-            fig.add_scatter(x=lu_adj['Year'], y=lu_adj['Area'], mode='markers', name=f'{lu} (Adj)', marker=dict(size=12, symbol='star'))
+            fig.add_scatter(
+                x=lu_adj['Year'], 
+                y=lu_adj['Area'], 
+                mode='markers', 
+                name=f'{lu} (Adjusted)', 
+                marker=dict(size=14, symbol='star', line=dict(width=2, color='white'))
+            )
         
-        st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(size=12, family="sans-serif"),
+            hovermode='x unified',
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02,
+                title=dict(text="", font=dict(size=13))
+            ),
+            margin=dict(l=50, r=200, t=50, b=50)
+        )
+        
+        st.plotly_chart(fig, width="stretch")
         
         # Downloads
+        st.markdown("---")
+        st.markdown("**💾 Download Results**")
+        
         col1, col2 = st.columns(2)
         with col1:
-            st.download_button("📥 Base CSV", results.to_csv(index=False), f"{country}_base.csv", "text/csv")
+            st.download_button(
+                "📥 Download Base Projection CSV", 
+                results.to_csv(index=False), 
+                f"{country}_base_projection.csv", 
+                "text/csv",
+                width="stretch"
+            )
         with col2:
             adj_full = results.copy()
             adj_full.loc[adj_full['Year'] == 2050, land_uses] = [adj_2050[lu].values[0] for lu in land_uses]
-            st.download_button("📥 Adjusted CSV", adj_full.to_csv(index=False), f"{country}_adjusted.csv", "text/csv")
+            st.download_button(
+                "📥 Download Adjusted Projection CSV", 
+                adj_full.to_csv(index=False), 
+                f"{country}_adjusted_projection.csv", 
+                "text/csv",
+                width="stretch"
+            )
