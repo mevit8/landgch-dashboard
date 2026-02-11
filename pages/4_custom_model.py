@@ -383,7 +383,12 @@ else:
     
     # Get total country area for reference
     if baseline_2020 is not None:
-        total_country_area = baseline_2020.sum()
+        # baseline_2020 is a dict with land use names as keys
+        if isinstance(baseline_2020, dict):
+            total_country_area = sum(baseline_2020.values())
+        else:
+            # If it's already an array/series
+            total_country_area = baseline_2020.sum()
         st.info(f"📍 **{selected_country} Total Area:** {total_country_area:,.0f} km²")
     else:
         total_country_area = None
