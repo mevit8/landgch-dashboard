@@ -216,9 +216,14 @@ with st.sidebar:
     # Logo FIRST
     st.image("https://unsdsn.globalclimatehub.org/wp-content/uploads/2022/09/logo.png", width=200)
     
-    # Navigation - only working pages
-    st.markdown("### 📍 Navigation")
+    st.title("🌍 LandGCH Dashboard")
+    st.markdown("---")
+    
+    # Navigation matching main app
+    st.markdown("### Navigation")
     st.page_link("landgch_app.py", label="🏠 Home")
+    st.page_link("landgch_app.py", label="🔍 Country Explorer")
+    st.page_link("landgch_app.py", label="📊 Scenario Comparison")
     st.page_link("pages/4_custom_model.py", label="🔬 Custom Model")
     
     st.markdown("### 🚀 Workflow Progress")
@@ -376,13 +381,20 @@ else:
     use_default_types = False
     st.info("👉 Define your custom land use categories")
     
+    # Get total country area for reference
+    if baseline_2020 is not None:
+        total_country_area = baseline_2020.sum()
+        st.info(f"📍 **{selected_country} Total Area:** {total_country_area:,.0f} km²")
+    else:
+        total_country_area = None
+    
     # Initialize in session state if not present
     if 'custom_num_land_uses' not in st.session_state:
         st.session_state['custom_num_land_uses'] = 4
     if 'custom_land_use_names' not in st.session_state:
         st.session_state['custom_land_use_names'] = []
-    if 'custom_baseline_areas' not in st.session_state:
-        st.session_state['custom_baseline_areas'] = []
+    if 'custom_baseline_percentages' not in st.session_state:
+        st.session_state['custom_baseline_percentages'] = []
     
     num_land_uses = st.number_input(
         "Number of categories",
@@ -393,40 +405,81 @@ else:
     
     # Temporary inputs (not confirmed yet)
     temp_land_uses = []
-    temp_baseline_areas = []
+    temp_baseline_percentages = []
     
-    st.markdown("**Enter names and baseline areas (2020):**")
+    st.markdown("**Enter names and baseline percentages (2020):**")
+    st.caption("💡 Enter the percentage of total area for each land use. Total should equal 100%.")
     
     cols = st.columns(3)
     for i in range(num_land_uses):
         with cols[i % 3]:
             # Get default value from session state if available
             default_name = st.session_state['custom_land_use_names'][i] if i < len(st.session_state['custom_land_use_names']) else f"LandUse_{i+1}"
-            default_area = st.session_state['custom_baseline_areas'][i] if i < len(st.session_state['custom_baseline_areas']) else 1000000.0
+            default_pct = st.session_state['custom_baseline_percentages'][i] if i < len(st.session_state['custom_baseline_percentages']) else (100.0 / num_land_uses)
             
             name = st.text_input(f"Land Use {i+1} Name", value=default_name, key=f"custom_lu_name_{i}")
-            area = st.number_input(f"Baseline (km²)", min_value=0.0, value=default_area, step=100000.0, format="%.0f", key=f"custom_lu_area_{i}")
+            pct = st.number_input(
+                f"Percentage (%)", 
+                min_value=0.0, 
+                max_value=100.0,
+                value=default_pct, 
+                step=1.0, 
+                format="%.2f", 
+                key=f"custom_lu_pct_{i}"
+            )
             temp_land_uses.append(name)
-            temp_baseline_areas.append(area)
+            temp_baseline_percentages.append(pct)
+    
+    # Calculate total percentage and show validation
+    total_pct = sum(temp_baseline_percentages)
+    
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Total Percentage", f"{total_pct:.2f}%")
+    with col2:
+        if total_country_area:
+            total_area_used = (total_pct / 100.0) * total_country_area
+            st.metric("Total Area", f"{total_area_used:,.0f} km²")
+    
+    # Validation warnings
+    if abs(total_pct - 100.0) > 1.0:
+        if total_pct > 100.0:
+            st.error(f"⚠️ **Over-allocation!** Total percentage is {total_pct:.2f}%. Reduce by {total_pct - 100.0:.2f}%")
+        else:
+            st.warning(f"⚠️ **Under-allocation!** Total percentage is {total_pct:.2f}%. Add {100.0 - total_pct:.2f}%")
+    elif abs(total_pct - 100.0) > 0.01:
+        st.info(f"✓ Close to 100% (difference: {abs(total_pct - 100.0):.2f}%)")
+    else:
+        st.success("✅ Perfect! Total = 100%")
     
     # Confirm button
-    st.markdown("---")
-    if st.button("✓ Confirm Land Uses", type="primary", width="content"):
+    confirm_disabled = abs(total_pct - 100.0) > 1.0  # Disable if difference > 1%
+    
+    if st.button("✓ Confirm Land Uses", type="primary", disabled=confirm_disabled, width="content"):
         st.session_state['custom_num_land_uses'] = num_land_uses
         st.session_state['custom_land_use_names'] = temp_land_uses
-        st.session_state['custom_baseline_areas'] = temp_baseline_areas
+        st.session_state['custom_baseline_percentages'] = temp_baseline_percentages
         st.success("✅ Land uses confirmed!")
         st.rerun()
     
-    st.caption("💡 Click 'Confirm' after entering/changing land use names to update")
+    if confirm_disabled:
+        st.caption("💡 Adjust percentages to total 100% (±1%) before confirming")
+    else:
+        st.caption("💡 Click 'Confirm' after entering/changing land use names to update")
     
     # Use confirmed values from session state
     land_uses = st.session_state['custom_land_use_names'] if st.session_state['custom_land_use_names'] else temp_land_uses
-    baseline_areas_list = st.session_state['custom_baseline_areas'] if st.session_state['custom_baseline_areas'] else temp_baseline_areas
+    baseline_percentages_list = st.session_state['custom_baseline_percentages'] if st.session_state['custom_baseline_percentages'] else temp_baseline_percentages
     
-    baseline_areas = np.array(baseline_areas_list)
-    if len(baseline_areas) > 0:
-        st.metric("Total Baseline Area", f"{baseline_areas.sum():,.0f} km²")
+    # Convert percentages to areas for the model
+    if total_country_area and len(baseline_percentages_list) > 0:
+        baseline_areas = np.array([(pct / 100.0) * total_country_area for pct in baseline_percentages_list])
+        st.success(f"✅ Converted percentages to areas based on {selected_country} total area")
+    else:
+        # Fallback if no country selected
+        baseline_areas = np.array(baseline_percentages_list) * 10000  # Arbitrary scale
+        st.warning("⚠️ No country selected - using arbitrary scale. Select a country for accurate areas.")
 
 st.markdown("---")
 
