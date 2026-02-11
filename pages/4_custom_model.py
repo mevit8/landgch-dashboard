@@ -389,7 +389,7 @@ else:
         else:
             # If it's already an array/series
             total_country_area = baseline_2020.sum()
-        st.info(f"📍 **{selected_country} Total Area:** {total_country_area:,.0f} km²")
+        st.info(f"📍 **{country} Total Area:** {total_country_area:,.0f} km²")
     else:
         total_country_area = None
     
@@ -480,7 +480,7 @@ else:
     # Convert percentages to areas for the model
     if total_country_area and len(baseline_percentages_list) > 0:
         baseline_areas = np.array([(pct / 100.0) * total_country_area for pct in baseline_percentages_list])
-        st.success(f"✅ Converted percentages to areas based on {selected_country} total area")
+        st.success(f"✅ Converted percentages to areas based on {country} total area")
     else:
         # Fallback if no country selected
         baseline_areas = np.array(baseline_percentages_list) * 10000  # Arbitrary scale
