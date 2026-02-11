@@ -42,19 +42,6 @@ env/
 .ipynb_checkpoints
 *.ipynb
 
-# Data files (don't commit large datasets)
-*.csv
-*.xlsx
-*.xls
-*.geotiff
-*.tif
-*.tiff
-*.shp
-*.shx
-*.dbf
-data/
-datasets/
-
 # Outputs
 outputs/
 results/
