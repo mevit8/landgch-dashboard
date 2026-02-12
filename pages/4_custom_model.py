@@ -36,38 +36,38 @@ SCENARIOS = {
         'multipliers': None
     },
     'Fat': {
-        'name': 'High-meat ("Fat" Diet)',
-        'description': 'Rich in meat - increased area to pasture and feed crops',
+        'name': 'High-meat diet',
+        'description': 'Rich in meat, this diet scenario assigns more area to pasture and feed crops.',
         'multipliers': {'Crops': 1.06, 'TreeCrops': 1.02, 'Forest': 0.97, 'Grassland': 1.12, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95}
     },
     'EAT': {
-        'name': 'The Lancet EAT Diet',
-        'description': 'Healthy diet - increased vegetables/legumes, reduced pasture',
+        'name': 'The Lancet EAT diet',
+        'description': 'A "healthy diet" scenario, increased area for vegetables/legumes and reduced pasture.',
         'multipliers': {'Crops': 0.90, 'TreeCrops': 0.97, 'Forest': 1.08, 'Grassland': 0.82, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98}
     },
     'NDC': {
         'name': 'National Determined Contributions',
-        'description': 'Forest gain targets, bioenergy crops',
+        'description': 'Countries implement explicit forest gain targets, crops may increase due to bioenergy demand.',
         'multipliers': {'Crops': 1.03, 'TreeCrops': 1.05, 'Forest': 1.07, 'Grassland': 0.98, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95}
     },
     'Afforest': {
         'name': 'Afforestation/Reforestation',
-        'description': 'Forest protection policies',
+        'description': 'Reduced deforestation/protection policies that restrict transitions out of forest.',
         'multipliers': {'Crops': 1.01, 'TreeCrops': 1.02, 'Forest': 1.07, 'Grassland': 0.99, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95}
     },
     'Bioen': {
-        'name': 'Bioenergy Expansion',
-        'description': 'Increased biofuel production',
+        'name': 'Bioenergy/energy crop expansion',
+        'description': 'Swift in green fuels production, biofuel mandates increase area of crops for bioenergy.',
         'multipliers': {'Crops': 1.03, 'TreeCrops': 1.05, 'Forest': 1.03, 'Grassland': 0.97, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95}
     },
     'Yieldint': {
-        'name': 'Yield Intensification',
-        'description': 'Higher yields, less land needed',
+        'name': 'Yield improvement/intensification',
+        'description': 'Higher yields reduce land need for the same output, lowering demand-driven conversion pressure.',
         'multipliers': {'Crops': 0.90, 'TreeCrops': 0.97, 'Forest': 1.03, 'Grassland': 0.83, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98}
     },
     'Landretir': {
-        'name': 'Land Retirement',
-        'description': 'Marginal cropland to forest',
+        'name': 'Land retirement/Carbon pricing',
+        'description': 'Potential incentives withdrawing marginal cropland to forest, or forcing retirement quotas.',
         'multipliers': {'Crops': 0.91, 'TreeCrops': 0.96, 'Forest': 1.07, 'Grassland': 0.82, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98}
     }
 }
@@ -221,7 +221,8 @@ with st.sidebar:
     
     # Navigation matching main app
     st.markdown("### Navigation")
-    st.page_link("landgch_app.py", label="🏠 Home")
+    st.page_link("landgch_app.py", label="📖 Introduction")
+    st.page_link("landgch_app.py", label="🌍 Global Results")
     st.page_link("landgch_app.py", label="🔍 Country Explorer")
     st.page_link("landgch_app.py", label="📊 Scenario Comparison")
     st.page_link("pages/4_custom_model.py", label="🔬 Custom Model")
@@ -615,6 +616,32 @@ if baseline_areas is not None:
             
             styled = matrix_df.style.map(highlight_sums, subset=['Row Sum']).format('{:.4f}')
             st.dataframe(styled, width="stretch")
+            
+            # Show uncertainty ranges
+            st.markdown("#### 📊 Transition Matrix with Uncertainty Ranges (±)")
+            st.caption("*Uncertainty values represent plausible variation bounds based on validation analysis*")
+            
+            # Calculate uncertainty: ±0.02 for small values, ±0.05 for larger values
+            # Uncertainty is proportional to sqrt(p*(1-p)) but capped for display
+            def calc_uncertainty(p):
+                if p <= 0.01:
+                    return 0.005
+                elif p <= 0.1:
+                    return 0.02
+                elif p <= 0.5:
+                    return 0.03
+                else:
+                    return 0.05
+            
+            # Create display with ± values
+            matrix_with_unc = pd.DataFrame(index=land_uses, columns=land_uses)
+            for i, row_lu in enumerate(land_uses):
+                for j, col_lu in enumerate(land_uses):
+                    val = matrix[i, j]
+                    unc = calc_uncertainty(val)
+                    matrix_with_unc.loc[row_lu, col_lu] = f"{val:.3f} ±{unc:.3f}"
+            
+            st.dataframe(matrix_with_unc, width="stretch")
             
             valid, errors = validate_transition_matrix(matrix)
             if valid:

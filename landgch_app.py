@@ -121,16 +121,18 @@ COLORS = {
     'Other': '#999999'       # Gray
 }
 
-# Scenario definitions
+# Scenario definitions - Full set with codes
 SCENARIOS = {
     'BAU': {
         'name': 'Business As Usual',
-        'description': 'Baseline projection using historical trends',
+        'code': 'BAU',
+        'description': 'The baseline model land use annual projections to 2050.',
         'color': '#666666'
     },
     'Fat': {
-        'name': 'High Meat Diet (Fat)',
-        'description': 'Increased livestock grazing, higher agricultural land demand',
+        'name': 'High-meat diet',
+        'code': 'Fat',
+        'description': 'Rich in meat, this diet scenario assigns more area to pasture and feed crops.',
         'multipliers': {
             'Crops': 1.06, 'TreeCrops': 1.02, 'Forest': 0.97,
             'Grassland': 1.12, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
@@ -138,8 +140,9 @@ SCENARIOS = {
         'color': '#d62728'
     },
     'EAT': {
-        'name': 'EAT-Lancet Diet',
-        'description': 'Plant-based diet, reduced agricultural footprint, forest restoration',
+        'name': 'The Lancet EAT diet',
+        'code': 'EAT',
+        'description': 'A "healthy diet" scenario, increased area for vegetables/legumes and reduced pasture.',
         'multipliers': {
             'Crops': 0.90, 'TreeCrops': 0.97, 'Forest': 1.08,
             'Grassland': 0.82, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98
@@ -147,13 +150,54 @@ SCENARIOS = {
         'color': '#2ca02c'
     },
     'NDC': {
-        'name': 'Afforestation & Biofuels',
-        'description': 'Forest expansion, biofuel crops, climate mitigation focus',
+        'name': 'National Determined Contributions',
+        'code': 'NDC',
+        'description': 'Countries implement explicit forest gain targets, crops may increase due to bioenergy demand.',
         'multipliers': {
             'Crops': 1.03, 'TreeCrops': 1.05, 'Forest': 1.07,
             'Grassland': 0.98, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
         },
         'color': '#17becf'
+    },
+    'Afforest': {
+        'name': 'Afforestation/Reforestation',
+        'code': 'Afforest',
+        'description': 'Reduced deforestation/protection policies that restrict transitions out of forest.',
+        'multipliers': {
+            'Crops': 1.01, 'TreeCrops': 1.02, 'Forest': 1.07,
+            'Grassland': 0.99, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
+        },
+        'color': '#9467bd'
+    },
+    'Bioen': {
+        'name': 'Bioenergy/energy crop expansion',
+        'code': 'Bioen',
+        'description': 'Swift in green fuels production, biofuel mandates increase area of crops for bioenergy.',
+        'multipliers': {
+            'Crops': 1.03, 'TreeCrops': 1.05, 'Forest': 1.03,
+            'Grassland': 0.97, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
+        },
+        'color': '#8c564b'
+    },
+    'Yieldint': {
+        'name': 'Yield improvement/intensification',
+        'code': 'Yieldint',
+        'description': 'Higher yields reduce land need for the same output, lowering demand-driven conversion pressure.',
+        'multipliers': {
+            'Crops': 0.90, 'TreeCrops': 0.97, 'Forest': 1.03,
+            'Grassland': 0.83, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98
+        },
+        'color': '#e377c2'
+    },
+    'Landretir': {
+        'name': 'Land retirement/Carbon pricing',
+        'code': 'Landretir',
+        'description': 'Potential incentives withdrawing marginal cropland to forest, or forcing retirement quotas.',
+        'multipliers': {
+            'Crops': 0.91, 'TreeCrops': 0.96, 'Forest': 1.07,
+            'Grassland': 0.82, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98
+        },
+        'color': '#7f7f7f'
     }
 }
 
@@ -348,9 +392,32 @@ def main():
         # Navigation
         page = st.radio(
             "Navigation",
-            ["🏠 Home", "🔍 Country Explorer", "📊 Scenario Comparison", "🔬 Custom Model"],
+            ["📖 Introduction", "🌍 Global Results", "🔍 Country Explorer", "📊 Scenario Comparison", "🔬 Custom Model"],
             label_visibility="collapsed"
         )
+        
+        st.markdown("---")
+        
+        # Scenarios expander
+        with st.expander("📋 Scenarios", expanded=False):
+            st.markdown("""
+            Dietary choices and land use policies strongly affect the area of land needed (or allowed). 
+            We have developed the following set of indicative scenarios:
+            """)
+            
+            scenario_table = """
+| Code | Name | Description |
+|------|------|-------------|
+| BAU | Business As Usual | Baseline model projections to 2050 |
+| Fat | High-meat diet | More area to pasture and feed crops |
+| EAT | The Lancet EAT diet | Increased vegetables/legumes, reduced pasture |
+| NDC | National Determined Contributions | Forest gain targets, bioenergy crops |
+| Afforest | Afforestation/Reforestation | Forest protection policies |
+| Bioen | Bioenergy expansion | Biofuel mandates increase crop area |
+| Yieldint | Yield intensification | Higher yields reduce land need |
+| Landretir | Land retirement | Marginal cropland to forest |
+"""
+            st.markdown(scenario_table)
         
         st.markdown("---")
         
@@ -365,8 +432,10 @@ def main():
         """)
     
     # Page routing
-    if page == "🏠 Home":
-        show_home_page()
+    if page == "📖 Introduction":
+        show_introduction_page()
+    elif page == "🌍 Global Results":
+        show_global_results()
     elif page == "🔍 Country Explorer":
         show_country_explorer()
     elif page == "📊 Scenario Comparison":
@@ -375,83 +444,83 @@ def main():
         st.switch_page("pages/4_custom_model.py")
 
 # ============================================================================
-# PAGE 1: HOME
+# PAGE 1: INTRODUCTION
 # ============================================================================
 
-def show_home_page():
-    """Home page with model overview"""
+def show_introduction_page():
+    """Introduction page with model overview"""
     
     st.title("🌍 LandGCH: Global Land-Use Change Model")
     st.markdown("### Interactive Dashboard for Land-Use Projections (2020-2050)")
     
     st.markdown("---")
     
-    # Model description
-    col1, col2 = st.columns([2, 1])
+    # Model description - new content from requirements
+    st.markdown("""
+    Land use change is a critical driver of global environmental change, affecting water resources, 
+    carbon sequestration, economic development, climate regulation, and food security. To assess 
+    future changes, we developed a comprehensive land use projection model for 227 states globally, 
+    spanning the period 2020-2050. Our approach leverages six decades of historical land use data 
+    combined with a spatially-explicit, time-varying Markov Chain framework to capture the complex 
+    dynamics of land use transitions while maintaining physical consistency and enabling rigorous validation.
+    """)
+    
+    st.markdown("---")
+    
+    # Summary of approach
+    st.markdown("## 📋 Summary of the LandGCH Approach")
+    
+    col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ## 📖 About the Model
-        
-        **LandGCH** is a comprehensive global land-use forecasting framework that combines:
-        
-        - **Historical Data**: HILDA+ v2.0 (1960-2020) at 1km² resolution
-        - **Forecasting Method**: Time-varying Markov Chain models
-        - **Validation**: Multi-period validation (10/20/30 years)
-        - **Scenarios**: Multiple dietary and policy interventions
-        - **Resolution**: Country-level projections with 7 land-use classes
-        
-        ### 🎯 Key Features
-        
-        1. **Baseline (BAU) Projections**: Business-as-usual forecasts based on historical trends
-        2. **Scenario Analysis**: Three intervention scenarios (Fat, EAT-Lancet, NDC/Afforestation)
-        3. **Country-Specific Dynamics**: Tailored constraints for different country types
-        4. **Uncertainty Quantification**: Probabilistic projections with confidence bounds
-        
-        ### 📊 Land-Use Classes
-        
-        - **Crops**: Annual cropland
-        - **TreeCrops**: Permanent crops (orchards, plantations)
-        - **Forest**: All forest types
-        - **Grassland**: Pasture and rangeland
-        - **Urban**: Built-up areas
-        - **Water**: Inland water bodies
-        - **Other**: Sparse vegetation, bare land
+        | Component | Description |
+        |-----------|-------------|
+        | **Historical Data** | HILDA+ v2.0 (2025) - annual, 1 km² resolution, 1960-2020 (Winkler et al.) |
+        | **State Boundaries** | Natural Earth (v5.1.1) |
+        | **Method** | Time-varying Markov Chain model |
+        | **Validation** | Multi-period (10/20/30 years) |
+        | **Scenarios** | Multiple dietary and land use policy interventions |
+        | **Resolution** | Country-level projections with 7 land-use classes |
         """)
     
     with col2:
         st.markdown("""
-        ## 🎨 Scenarios
+        ### 🎯 Key Features of the Approach
         
-        ### 🥩 Fat Scenario
-        High meat consumption, increased grazing land
-        
-        ### 🥗 EAT-Lancet
-        Plant-based diet, reduced agricultural footprint
-        
-        ### 🌲 NDC/Afforestation
-        Forest expansion, biofuels, climate mitigation
-        
-        ---
-        
-        ## 📅 Timeline
-        
-        - **Historical**: 1960-2020
-        - **Baseline**: 2020
-        - **Projections**: 2021-2050
-        - **Scenarios applied**: 2026-2050
-        
-        ---
-        
-        ## 🔬 Methodology
-        
-        1. HILDA+ data processing
-        2. Country boundary overlay
-        3. Transition matrix calculation
-        4. Markov Chain validation
-        5. Scenario multipliers
-        6. Future projections
+        - **Spatial overlay**: HILDA+ with Natural Earth boundaries
+        - **Transition matrices**: 60 annual + 3 multi-year period matrices (10/20/30 years)
+        - **Time-Varying Markov Chain**: Captures non-linearities and heterogeneous transitions
+        - **Validation**: Hierarchical time-window strategy with hindcasting
+        - **Uncertainty**: Monte Carlo simulation (100 realizations) + bias correction
         """)
+    
+    st.markdown("---")
+    
+    # Land-Use Classes
+    st.markdown("## 📊 Land-Use Classes")
+    st.markdown("*Capturing primary functional distinctions relevant to economic development, carbon and water resource analyses*")
+    
+    land_use_descriptions = {
+        "Crops": "Annual and perennial cropland under agricultural production",
+        "TreeCrops": "Permanent tree crop plantations (same as in original HILDA+)",
+        "Forest": "Natural and semi-natural forest ecosystems (evergreen, deciduous, mixed)",
+        "Grassland": "Natural grasslands, pastures, and rangelands",
+        "Urban": "Built-up areas including residential, commercial, and industrial zones",
+        "Water": "Inland water bodies, rivers, and wetlands",
+        "Other": "Barren land, bare soil, ice, and unclassified areas"
+    }
+    
+    cols = st.columns(4)
+    for i, (lu, desc) in enumerate(land_use_descriptions.items()):
+        with cols[i % 4]:
+            color = COLORS.get(lu, '#999999')
+            st.markdown(f"""
+            <div style='background-color: {color}20; border-left: 4px solid {color}; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 0.25rem;'>
+                <strong style='color: {color};'>{lu}</strong><br>
+                <small>{desc}</small>
+            </div>
+            """, unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -483,10 +552,153 @@ def show_home_page():
         pass
     
     st.markdown("---")
-    st.info("👈 Use the sidebar to navigate to **Country Explorer** or **Scenario Comparison**")
+    st.info("👈 Use the sidebar to navigate to **Global Results**, **Country Explorer**, or **Scenario Comparison**")
 
 # ============================================================================
-# PAGE 2: COUNTRY EXPLORER
+# PAGE 2: GLOBAL RESULTS
+# ============================================================================
+
+def show_global_results():
+    """Global results page with validation and projections"""
+    
+    st.title("🌍 Global Results")
+    st.markdown("### Land Use Projection Validation and Global Trends")
+    
+    st.markdown("---")
+    
+    # Section 1: Validation
+    st.markdown("## 📊 Land Use Projection Validation")
+    
+    st.markdown("""
+    Our validation strategy uses a hierarchical time-window approach, selecting the optimal 
+    transition matrix period based on empirical validation performance:
+    """)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("Recent Period (2010-2020)", "105 countries (46%)")
+        st.caption("Predominantly stable, high-income nations with consistent land use trends")
+    
+    with col2:
+        st.metric("Medium Period (2000-2020)", "7 countries (3%)")
+        st.caption("Intermediate cases with recent volatility but stable long-term trends")
+    
+    with col3:
+        st.metric("Long Period (1990-2020)", "116 countries (51%)")
+        st.caption("Typically developing countries with long-term structural transitions, or large developed countries with recently changed policies")
+    
+    # Placeholder for validation figure
+    st.markdown("---")
+    st.markdown("### Validation Period Selection by Country")
+    st.info("📊 *Validation figure placeholder - add your validation map/figure here*")
+    
+    st.markdown("---")
+    
+    # Section 2: Global Overview
+    st.markdown("## 🌐 Global Land Use Change Overview (2020-2050)")
+    
+    st.markdown("""
+    **Overall trends:** slight cropland expansion (+0.8%), rapid tree crop growth (+32.7%), 
+    reflecting documented trends in oil palm (Indonesia, Malaysia, West Africa), coffee, cocoa, 
+    and fruit plantations. The continued forest loss (-2.3%) aligns with IPCC baseline scenarios 
+    showing persistent tropical deforestation partially offset by temperate reforestation, while 
+    accelerating urbanization (+16.8%) matches UN-Habitat projections of urban population share 
+    increasing from 55% (2018) to 68% (2050).
+    """)
+    
+    # Try to compute actual global statistics from data
+    try:
+        df_bau = load_data('bau')
+        if df_bau is not None:
+            df_2020 = df_bau[df_bau['Year'] == 2020]
+            df_2050 = df_bau[df_bau['Year'] == 2050]
+            
+            st.markdown("### Absolute and Relative Changes in Land Use Area (2020-2050)")
+            
+            change_data = []
+            for lu in LAND_CLASSES:
+                area_2020 = df_2020[lu].sum()
+                area_2050 = df_2050[lu].sum()
+                abs_change = area_2050 - area_2020
+                pct_change = (abs_change / area_2020 * 100) if area_2020 > 0 else 0
+                
+                change_data.append({
+                    'Land Use': lu,
+                    '2020 Area (km²)': f"{area_2020:,.0f}",
+                    '2050 Area (km²)': f"{area_2050:,.0f}",
+                    'Change (km²)': f"{abs_change:+,.0f}",
+                    'Change (%)': f"{pct_change:+.1f}%"
+                })
+            
+            st.dataframe(pd.DataFrame(change_data), use_container_width=True, hide_index=True)
+            
+            # Create visualization
+            fig = make_subplots(rows=1, cols=2, subplot_titles=('2020 Distribution', '2050 Distribution'),
+                               specs=[[{'type': 'pie'}, {'type': 'pie'}]])
+            
+            values_2020 = [df_2020[lu].sum() for lu in LAND_CLASSES]
+            values_2050 = [df_2050[lu].sum() for lu in LAND_CLASSES]
+            colors = [COLORS[lu] for lu in LAND_CLASSES]
+            
+            fig.add_trace(go.Pie(labels=LAND_CLASSES, values=values_2020, marker_colors=colors, 
+                                 textinfo='percent', name='2020'), row=1, col=1)
+            fig.add_trace(go.Pie(labels=LAND_CLASSES, values=values_2050, marker_colors=colors,
+                                 textinfo='percent', name='2050'), row=1, col=2)
+            
+            fig.update_layout(height=400, showlegend=True, title_text="Global Land Use Distribution")
+            st.plotly_chart(fig, use_container_width=True)
+            
+    except Exception as e:
+        st.warning(f"Could not load data for global statistics: {e}")
+    
+    st.markdown("---")
+    
+    # Section 3: European Results
+    st.markdown("## 🇪🇺 European Land Use Projections to 2050")
+    
+    st.markdown("""
+    **Indicative summary for Europe:** Overall, forests are broadly stable-to-growing in some 
+    countries while a few countries show small declines. Cropland area moves only slightly, 
+    with modest increases in Spain but small declines in several others (e.g., Poland, Romania, Greece). 
+    Tree-crops and some traditional agricultural uses decline across most countries, whereas urban 
+    area steadily expands everywhere. Water bodies remain essentially constant and grassland shows 
+    mixed changes (small declines in some northern states, slight rises in countries like Italy/Romania).
+    """)
+    
+    st.info("📊 *European regional plots placeholder - add your Europe-specific visualizations here*")
+    
+    st.markdown("---")
+    
+    # Section 4: Decadal Changes
+    st.markdown("## 📈 Decadal Changes of Main Land Uses")
+    
+    st.markdown("""
+    **Key observations:** Urban land expansion is consistently positive for all countries. Forest cover 
+    is projected to increase in most countries, particularly Egypt, which shows extremely high positive 
+    change across all decades up to 2050. Conversely, Brazil, Australia, and Argentina are expected to 
+    see declines, raising concerns about deforestation and ecosystem service losses in these major 
+    forest-rich nations. Crops show mixed trends across countries. These changes underscore the dynamic 
+    impacts of climate, policy, and market forces on agricultural land use globally.
+    """)
+    
+    st.info("📊 *Decadal change plots placeholder - add your decade-by-decade visualizations here*")
+    
+    st.markdown("---")
+    
+    # Section 5: Tropical Deforestation
+    st.markdown("## 🌴 Tropical Deforestation Sites")
+    
+    st.markdown("""
+    **Major tropical forest areas** show ongoing declines through 2050. Cropland and tree-crop/plantation 
+    areas expand noticeably, while grassland and urban footprints generally rise as well, indicating 
+    conversion of natural land to agriculture and settlements.
+    """)
+    
+    st.info("📊 *Tropical deforestation plots placeholder - add your tropical region visualizations here*")
+
+# ============================================================================
+# PAGE 3: COUNTRY EXPLORER
 # ============================================================================
 
 def show_country_explorer():
@@ -511,8 +723,12 @@ def show_country_explorer():
         selected_country = st.selectbox(
             "Select Country (ISO3 Code)",
             countries,
-            index=countries.index('USA') if 'USA' in countries else 0
+            index=None,
+            placeholder="Choose a country..."
         )
+        
+        if selected_country is None:
+            st.info("👆 Please select a country to view projections")
         
         st.markdown("---")
         
@@ -538,6 +754,12 @@ def show_country_explorer():
         )
     
     with col2:
+        # Check if country is selected
+        if selected_country is None:
+            st.markdown("## 👈 Select a Country")
+            st.markdown("Use the dropdown on the left to choose a country and view its land-use projections.")
+            return
+        
         # Get country data
         country_df_bau = get_country_data(df_bau, selected_country)
         
@@ -598,7 +820,7 @@ def show_country_explorer():
             st.dataframe(country_df_bau[['Year'] + LAND_CLASSES], use_container_width=True)
 
 # ============================================================================
-# PAGE 3: SCENARIO COMPARISON
+# PAGE 4: SCENARIO COMPARISON
 # ============================================================================
 
 def show_scenario_comparison():
@@ -623,18 +845,18 @@ def show_scenario_comparison():
         st.markdown("### 🌍 Select Countries")
         
         # Quick selection buttons
+        quick_select = None
         if st.button("Top 10 by area"):
             # Calculate total area per country in 2020
             df_2020 = df_bau[df_bau['Year'] == 2020]
             country_areas = df_2020.groupby('Country')[LAND_CLASSES].sum().sum(axis=1).nlargest(10)
-            selected_countries = list(country_areas.index)
-        else:
-            selected_countries = ['USA', 'CHN', 'BRA', 'RUS', 'IND']
+            quick_select = list(country_areas.index)
         
         selected_countries = st.multiselect(
             "Countries to compare",
             countries,
-            default=selected_countries[:5]
+            default=quick_select if quick_select else [],
+            placeholder="Choose countries..."
         )
         
         st.markdown("---")
@@ -642,8 +864,9 @@ def show_scenario_comparison():
         st.markdown("### 📊 Scenarios")
         scenarios_to_compare = st.multiselect(
             "Select scenarios",
-            ['BAU', 'Fat', 'EAT', 'NDC'],
-            default=['BAU', 'EAT']
+            ['BAU', 'Fat', 'EAT', 'NDC', 'Afforest', 'Bioen', 'Yieldint', 'Landretir'],
+            default=[],
+            placeholder="Choose scenarios..."
         )
         
         st.markdown("---")
@@ -651,18 +874,25 @@ def show_scenario_comparison():
         st.markdown("### 🎨 Options")
         land_use_compare = st.selectbox(
             "Land-use type",
-            LAND_CLASSES
+            LAND_CLASSES,
+            index=None,
+            placeholder="Choose land-use type..."
         )
         
         normalize = st.checkbox("Normalize to 2020 = 100", value=True)
     
     with col2:
         if not selected_countries:
-            st.info("👈 Select countries from the sidebar to begin comparison")
+            st.markdown("## 👈 Select Countries")
+            st.markdown("Use the options on the left to choose countries, scenarios, and land-use type for comparison.")
             return
         
         if not scenarios_to_compare:
-            st.warning("Please select at least one scenario")
+            st.info("👈 Please select at least one scenario to compare")
+            return
+        
+        if land_use_compare is None:
+            st.info("👈 Please select a land-use type to compare")
             return
         
         st.markdown(f"## {land_use_compare} Comparison")
