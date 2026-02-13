@@ -381,21 +381,12 @@ def create_2050_comparison_bar(country_dfs, country_code):
 def main():
     """Main application logic"""
     
-    # Sidebar with logo and navigation
+    # Sidebar with logo and info
     with st.sidebar:
         # Logo first
         st.image("https://unsdsn.globalclimatehub.org/wp-content/uploads/2022/09/logo.png", width=200)
         
         st.title("🌍 LandGCH Dashboard")
-        st.markdown("---")
-        
-        # Navigation
-        page = st.radio(
-            "Navigation",
-            ["📖 Introduction", "🌍 Global Results", "🔍 Country Explorer", "📊 Scenario Comparison", "🔬 Custom Model"],
-            label_visibility="collapsed"
-        )
-        
         st.markdown("---")
         
         # Scenarios expander
@@ -431,17 +422,50 @@ def main():
         - Country-specific dynamics
         """)
     
-    # Page routing
-    if page == "📖 Introduction":
+    # Main content area with tabs
+    tab_intro, tab_global, tab_country, tab_scenario, tab_custom = st.tabs([
+        "📖 Introduction",
+        "🌍 Global Results", 
+        "🔍 Country Explorer",
+        "📊 Scenario Comparison",
+        "🔬 Custom Model"
+    ])
+    
+    with tab_intro:
         show_introduction_page()
-    elif page == "🌍 Global Results":
+    
+    with tab_global:
         show_global_results()
-    elif page == "🔍 Country Explorer":
+    
+    with tab_country:
         show_country_explorer()
-    elif page == "📊 Scenario Comparison":
+    
+    with tab_scenario:
         show_scenario_comparison()
-    elif page == "🔬 Custom Model":
+    
+    with tab_custom:
+        show_custom_model_tab()
+
+
+def show_custom_model_tab():
+    """Custom Model tab - links to full Custom Model page"""
+    st.title("🔬 Custom Model Builder")
+    st.markdown("""
+    The Custom Model Builder allows you to create your own land-use projections using:
+    
+    - **Stage 1: Base Projection** - Run Markov Chain projection with your own transition matrix
+    - **Stage 2: Scenario Adjustment** - Apply multipliers to adjust 2050 results
+    
+    This is a two-stage process that gives you full control over the projection parameters.
+    """)
+    
+    st.markdown("---")
+    
+    if st.button("🚀 Open Custom Model Builder", type="primary", use_container_width=True):
         st.switch_page("pages/4_custom_model.py")
+    
+    st.info("Click the button above to access the full Custom Model Builder with transition matrix input and scenario adjustments.")
+
 
 # ============================================================================
 # PAGE 1: INTRODUCTION
@@ -524,6 +548,18 @@ def show_introduction_page():
     
     st.markdown("---")
     
+    # Timeline
+    st.markdown("## 📅 Timeline")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("**Historical**: 1960-2020")
+    with col2:
+        st.markdown("**Projections**: 2021-2050")
+    with col3:
+        st.markdown("**Scenarios applied**: 2026-2050")
+    
+    st.markdown("---")
+    
     # Quick stats
     st.markdown("## 📈 Quick Statistics")
     
@@ -552,7 +588,7 @@ def show_introduction_page():
         pass
     
     st.markdown("---")
-    st.info("👈 Use the sidebar to navigate to **Global Results**, **Country Explorer**, or **Scenario Comparison**")
+    st.info("☝️ Use the tabs above to explore **Global Results**, **Country Explorer**, or **Scenario Comparison**")
 
 # ============================================================================
 # PAGE 2: GLOBAL RESULTS
@@ -588,10 +624,70 @@ def show_global_results():
         st.metric("Long Period (1990-2020)", "116 countries (51%)")
         st.caption("Typically developing countries with long-term structural transitions, or large developed countries with recently changed policies")
     
-    # Placeholder for validation figure
+    # Interactive validation map
     st.markdown("---")
     st.markdown("### Validation Period Selection by Country")
-    st.info("📊 *Validation figure placeholder - add your validation map/figure here*")
+    
+    # Country to validation period mapping (recreated from original figure)
+    validation_data = {
+        'recent': ['USA', 'CAN', 'RUS', 'CHN', 'AUS', 'NZL', 'JPN', 'KOR', 'TWN',
+                   'DEU', 'FRA', 'GBR', 'ITA', 'ESP', 'PRT', 'NLD', 'BEL', 'AUT', 'CHE',
+                   'POL', 'CZE', 'SVK', 'HUN', 'ROU', 'BGR', 'GRC', 'HRV', 'SVN',
+                   'DNK', 'SWE', 'NOR', 'FIN', 'EST', 'LVA', 'LTU', 'IRL', 'ISL',
+                   'SAU', 'ARE', 'KWT', 'QAT', 'BHR', 'OMN', 'ISR', 'JOR',
+                   'EGY', 'MAR', 'TUN', 'DZA', 'LBY',
+                   'ZAF', 'BWA', 'NAM', 'KEN', 'TZA', 'UGA', 'RWA',
+                   'CHL', 'URY', 'PRY',
+                   'MYS', 'SGP', 'BRN', 'PHL',
+                   'TUR', 'GEO', 'ARM', 'AZE', 'KAZ', 'UZB', 'TKM'],
+        'medium': ['TCD', 'CAF', 'SSD', 'ERI', 'SOM', 'YEM', 'AFG'],
+        'long': ['BRA', 'ARG', 'COL', 'PER', 'VEN', 'ECU', 'BOL', 'GUY', 'SUR',
+                 'MEX', 'GTM', 'HND', 'SLV', 'NIC', 'CRI', 'PAN', 'BLZ',
+                 'CUB', 'DOM', 'HTI', 'JAM',
+                 'IND', 'PAK', 'BGD', 'NPL', 'LKA', 'MMR', 'THA', 'VNM', 'LAO', 'KHM',
+                 'IDN', 'PNG',
+                 'NGA', 'GHA', 'CIV', 'CMR', 'COD', 'COG', 'AGO', 'MOZ', 'ZMB', 'ZWE',
+                 'MWI', 'MDG', 'SEN', 'MLI', 'BFA', 'NER', 'GIN', 'SLE', 'LBR',
+                 'ETH', 'SDN',
+                 'IRN', 'IRQ', 'SYR', 'LBN',
+                 'UKR', 'BLR', 'MDA']
+    }
+    
+    map_data = []
+    for period, countries in validation_data.items():
+        for country in countries:
+            map_data.append({'Country': country, 'Period': period})
+    
+    df_validation = pd.DataFrame(map_data)
+    period_labels = {
+        'recent': 'Recent (2010-2020)',
+        'medium': 'Medium (2000-2020)',
+        'long': 'Long (1990-2020)'
+    }
+    df_validation['Period_Label'] = df_validation['Period'].map(period_labels)
+    
+    fig_validation = px.choropleth(
+        df_validation,
+        locations='Country',
+        color='Period_Label',
+        color_discrete_map={
+            'Recent (2010-2020)': '#1f77b4',
+            'Medium (2000-2020)': '#d3d3d3', 
+            'Long (1990-2020)': '#7f7f7f'
+        },
+        title='Validation Period Used per Country',
+        hover_name='Country',
+        hover_data={'Period_Label': True, 'Country': False}
+    )
+    
+    fig_validation.update_layout(
+        geo=dict(showframe=False, showcoastlines=True, projection_type='natural earth', bgcolor='rgba(0,0,0,0)'),
+        height=500,
+        margin=dict(l=0, r=0, t=40, b=0),
+        legend_title_text='Validation Period'
+    )
+    
+    st.plotly_chart(fig_validation, use_container_width=True)
     
     st.markdown("---")
     
@@ -599,103 +695,274 @@ def show_global_results():
     st.markdown("## 🌐 Global Land Use Change Overview (2020-2050)")
     
     st.markdown("""
-    **Overall trends:** slight cropland expansion (+0.8%), rapid tree crop growth (+32.7%), 
-    reflecting documented trends in oil palm (Indonesia, Malaysia, West Africa), coffee, cocoa, 
-    and fruit plantations. The continued forest loss (-2.3%) aligns with IPCC baseline scenarios 
-    showing persistent tropical deforestation partially offset by temperate reforestation, while 
+    **Overall:** slight cropland expansion (+0.8%), rapid tree crop growth (+32.7%), reflecting 
+    documented trends in oil palm (Indonesia, Malaysia, West Africa), coffee, cocoa, and fruit 
+    plantations. Unfortunately, the continued forest loss (-2.3%) aligns with IPCC baseline scenarios 
+    showing persistent tropical deforestation partially offset by temperate reforestation, while the 
     accelerating urbanization (+16.8%) matches UN-Habitat projections of urban population share 
     increasing from 55% (2018) to 68% (2050).
     """)
     
-    # Try to compute actual global statistics from data
+    # Load data and create visualizations
     try:
         df_bau = load_data('bau')
         if df_bau is not None:
             df_2020 = df_bau[df_bau['Year'] == 2020]
             df_2050 = df_bau[df_bau['Year'] == 2050]
             
-            st.markdown("### Absolute and Relative Changes in Land Use Area (2020-2050)")
-            
+            # Calculate changes
             change_data = []
             for lu in LAND_CLASSES:
                 area_2020 = df_2020[lu].sum()
                 area_2050 = df_2050[lu].sum()
                 abs_change = area_2050 - area_2020
                 pct_change = (abs_change / area_2020 * 100) if area_2020 > 0 else 0
-                
                 change_data.append({
                     'Land Use': lu,
-                    '2020 Area (km²)': f"{area_2020:,.0f}",
-                    '2050 Area (km²)': f"{area_2050:,.0f}",
-                    'Change (km²)': f"{abs_change:+,.0f}",
-                    'Change (%)': f"{pct_change:+.1f}%"
+                    'Area 2020': area_2020,
+                    'Area 2050': area_2050,
+                    'Change km²': abs_change,
+                    'Change %': pct_change
                 })
             
-            st.dataframe(pd.DataFrame(change_data), use_container_width=True, hide_index=True)
+            df_changes = pd.DataFrame(change_data)
             
-            # Create visualization
-            fig = make_subplots(rows=1, cols=2, subplot_titles=('2020 Distribution', '2050 Distribution'),
-                               specs=[[{'type': 'pie'}, {'type': 'pie'}]])
+            # Display summary table
+            st.markdown("### Absolute (km²) and Relative (%) Changes in Area")
+            display_df = df_changes.copy()
+            display_df['Area 2020'] = display_df['Area 2020'].apply(lambda x: f"{x:,.0f}")
+            display_df['Area 2050'] = display_df['Area 2050'].apply(lambda x: f"{x:,.0f}")
+            display_df['Change km²'] = display_df['Change km²'].apply(lambda x: f"{x:+,.0f}")
+            display_df['Change %'] = display_df['Change %'].apply(lambda x: f"{x:+.1f}%")
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
             
-            values_2020 = [df_2020[lu].sum() for lu in LAND_CLASSES]
-            values_2050 = [df_2050[lu].sum() for lu in LAND_CLASSES]
+            # Chart 1: Grouped bars (2020 vs 2050)
+            st.markdown("### Global Land Use — 2020 vs 2050 (BAU)")
+            fig_grouped = go.Figure()
+            fig_grouped.add_trace(go.Bar(
+                name='2020',
+                x=df_changes['Land Use'],
+                y=df_changes['Area 2020'],
+                marker_color='#5b9bd5'
+            ))
+            fig_grouped.add_trace(go.Bar(
+                name='2050 (BAU)',
+                x=df_changes['Land Use'],
+                y=df_changes['Area 2050'],
+                marker_color='#ff8c00'
+            ))
+            fig_grouped.update_layout(
+                barmode='group',
+                yaxis_title='Area (km²)',
+                template='plotly_white',
+                height=450,
+                legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+            )
+            st.plotly_chart(fig_grouped, use_container_width=True)
+            
+            # Chart 2: Absolute change bar chart
+            st.markdown("### Absolute Change in Area: 2020 → 2050 (km²)")
+            colors_abs = ['#2ca02c' if v >= 0 else '#d62728' for v in df_changes['Change km²']]
+            fig_abs = go.Figure(go.Bar(
+                x=df_changes['Land Use'],
+                y=df_changes['Change km²'],
+                marker_color=colors_abs,
+                text=[f"{v:+,.0f}" for v in df_changes['Change km²']],
+                textposition='outside'
+            ))
+            fig_abs.update_layout(
+                yaxis_title='Absolute Change (km²)',
+                template='plotly_white',
+                height=400
+            )
+            st.plotly_chart(fig_abs, use_container_width=True)
+            
+            # Chart 3: Percent change bar chart
+            st.markdown("### Percent Change in Area: 2020 → 2050 (%)")
+            fig_pct = go.Figure(go.Bar(
+                x=df_changes['Land Use'],
+                y=df_changes['Change %'],
+                marker_color='#1f77b4',
+                text=[f"{v:+.1f}%" for v in df_changes['Change %']],
+                textposition='outside'
+            ))
+            fig_pct.update_layout(
+                yaxis_title='Percent Change (%)',
+                template='plotly_white',
+                height=400
+            )
+            st.plotly_chart(fig_pct, use_container_width=True)
+            
+            # Chart 4: Composition pies (2020 vs 2050)
+            st.markdown("### Total Distribution of 2020 vs 2050 Land Uses")
+            fig_pies = make_subplots(rows=1, cols=2, subplot_titles=(
+                f"2020 (Total: {df_changes['Area 2020'].sum():,.0f} km²)",
+                f"2050 (Total: {df_changes['Area 2050'].sum():,.0f} km²)"
+            ), specs=[[{'type': 'pie'}, {'type': 'pie'}]])
+            
             colors = [COLORS[lu] for lu in LAND_CLASSES]
+            fig_pies.add_trace(go.Pie(
+                labels=df_changes['Land Use'], values=df_changes['Area 2020'],
+                marker_colors=colors, textinfo='percent', name='2020'
+            ), row=1, col=1)
+            fig_pies.add_trace(go.Pie(
+                labels=df_changes['Land Use'], values=df_changes['Area 2050'],
+                marker_colors=colors, textinfo='percent', name='2050'
+            ), row=1, col=2)
+            fig_pies.update_layout(height=450, showlegend=True)
+            st.plotly_chart(fig_pies, use_container_width=True)
             
-            fig.add_trace(go.Pie(labels=LAND_CLASSES, values=values_2020, marker_colors=colors, 
-                                 textinfo='percent', name='2020'), row=1, col=1)
-            fig.add_trace(go.Pie(labels=LAND_CLASSES, values=values_2050, marker_colors=colors,
-                                 textinfo='percent', name='2050'), row=1, col=2)
+            st.markdown("---")
             
-            fig.update_layout(height=400, showlegend=True, title_text="Global Land Use Distribution")
-            st.plotly_chart(fig, use_container_width=True)
+            # Section 3: European Results
+            st.markdown("## 🇪🇺 Indicative Summary: European Land Use Projections to 2050")
             
+            st.markdown("""
+            Indicatively for Europe, overall, forests are broadly stable-to-growing in some countries 
+            while a few countries show small declines. Cropland area moves only slightly, with modest 
+            increases in Spain but small declines in several others (e.g., Poland, Romania, Greece). 
+            Tree-crops and some traditional agricultural uses decline across most countries, whereas 
+            urban area steadily expands everywhere. Water bodies remain essentially constant and 
+            grassland shows mixed changes (small declines in some northern states, slight rises in 
+            countries like Italy/Romania).
+            """)
+            
+            # European countries chart
+            eu_countries = ['DEU', 'FRA', 'ESP', 'ITA', 'POL', 'ROU', 'GRC', 'NLD', 'BEL', 'PRT', 'SWE', 'AUT']
+            df_eu_2020 = df_2020[df_2020['Country'].isin(eu_countries)]
+            df_eu_2050 = df_2050[df_2050['Country'].isin(eu_countries)]
+            
+            if not df_eu_2020.empty:
+                eu_changes = []
+                for country in eu_countries:
+                    c_2020 = df_eu_2020[df_eu_2020['Country'] == country]
+                    c_2050 = df_eu_2050[df_eu_2050['Country'] == country]
+                    if not c_2020.empty and not c_2050.empty:
+                        for lu in ['Forest', 'Crops', 'Urban', 'Grassland']:
+                            val_2020 = c_2020[lu].values[0]
+                            val_2050 = c_2050[lu].values[0]
+                            pct = ((val_2050 - val_2020) / val_2020 * 100) if val_2020 > 0 else 0
+                            eu_changes.append({'Country': country, 'Land Use': lu, 'Change %': pct})
+                
+                if eu_changes:
+                    df_eu = pd.DataFrame(eu_changes)
+                    fig_eu = px.bar(
+                        df_eu, x='Country', y='Change %', color='Land Use',
+                        barmode='group', title='European Countries: Projected Change 2020-2050 (%)',
+                        color_discrete_map={'Forest': COLORS['Forest'], 'Crops': COLORS['Crops'], 
+                                           'Urban': COLORS['Urban'], 'Grassland': COLORS['Grassland']}
+                    )
+                    fig_eu.update_layout(template='plotly_white', height=450)
+                    st.plotly_chart(fig_eu, use_container_width=True)
+            
+            st.markdown("---")
+            
+            # Section 4: Decadal Changes
+            st.markdown("## 📈 Decadal Changes of Main Land Uses Across Countries with Strong Variations")
+            
+            st.markdown("""
+            Urban land expansion is consistently positive for all countries, forest cover is projected 
+            to increase in most countries, particularly Egypt, which shows extremely high positive change 
+            across all decades up to 2050. Conversely, Brazil, Australia, and Argentina are expected to 
+            see declines, raising concerns about deforestation and ecosystem service losses in these major 
+            forest-rich nations. Crops show mixed trends across countries. These changes underscore the 
+            dynamic impacts of climate, policy, and market forces on agricultural land use globally.
+            """)
+            
+            # Decadal heatmap for key countries
+            key_countries = ['EGY', 'BRA', 'AUS', 'ARG', 'USA', 'CHN', 'IND', 'IDN', 'RUS', 'DEU']
+            decades = [(2020, 2030), (2030, 2040), (2040, 2050)]
+            
+            heatmap_data = []
+            for country in key_countries:
+                country_data = df_bau[df_bau['Country'] == country]
+                if not country_data.empty:
+                    for start, end in decades:
+                        row_start = country_data[country_data['Year'] == start]
+                        row_end = country_data[country_data['Year'] == end]
+                        if not row_start.empty and not row_end.empty:
+                            for lu in ['Forest', 'Urban', 'Crops']:
+                                val_start = row_start[lu].values[0]
+                                val_end = row_end[lu].values[0]
+                                pct = ((val_end - val_start) / val_start * 100) if val_start > 0 else 0
+                                heatmap_data.append({
+                                    'Country': country,
+                                    'Decade': f'{start}-{end}',
+                                    'Land Use': lu,
+                                    'Change %': pct
+                                })
+            
+            if heatmap_data:
+                df_heat = pd.DataFrame(heatmap_data)
+                
+                # Create heatmap for each land use
+                for lu in ['Forest', 'Urban', 'Crops']:
+                    df_lu = df_heat[df_heat['Land Use'] == lu]
+                    if not df_lu.empty:
+                        pivot = df_lu.pivot(index='Country', columns='Decade', values='Change %')
+                        
+                        fig_heat = go.Figure(data=go.Heatmap(
+                            z=pivot.values,
+                            x=pivot.columns.tolist(),
+                            y=pivot.index.tolist(),
+                            colorscale='RdYlGn',
+                            zmid=0,
+                            text=np.round(pivot.values, 1),
+                            texttemplate='%{text}%',
+                            textfont={"size": 10},
+                            colorbar=dict(title="% Change")
+                        ))
+                        fig_heat.update_layout(
+                            title=f'{lu} - Decadal Change Across Countries (%)',
+                            template='plotly_white',
+                            height=400
+                        )
+                        st.plotly_chart(fig_heat, use_container_width=True)
+            
+            st.markdown("---")
+            
+            # Section 5: Tropical Deforestation
+            st.markdown("## 🌴 Main Land Use Change Results: Tropical Deforestation Sites")
+            
+            st.markdown("""
+            Major tropical forest areas show ongoing declines through 2050. Cropland and tree-crop/plantation 
+            areas expand noticeably, while grassland and urban footprints generally rise as well, indicating 
+            conversion of natural land to agriculture and settlements.
+            """)
+            
+            # Tropical countries
+            tropical_countries = ['BRA', 'IDN', 'COD', 'PER', 'COL', 'VNM', 'MMR', 'MYS']
+            df_trop_2020 = df_2020[df_2020['Country'].isin(tropical_countries)]
+            df_trop_2050 = df_2050[df_2050['Country'].isin(tropical_countries)]
+            
+            if not df_trop_2020.empty:
+                trop_changes = []
+                for country in tropical_countries:
+                    c_2020 = df_trop_2020[df_trop_2020['Country'] == country]
+                    c_2050 = df_trop_2050[df_trop_2050['Country'] == country]
+                    if not c_2020.empty and not c_2050.empty:
+                        for lu in LAND_CLASSES:
+                            val_2020 = c_2020[lu].values[0]
+                            val_2050 = c_2050[lu].values[0]
+                            pct = ((val_2050 - val_2020) / val_2020 * 100) if val_2020 > 0 else 0
+                            trop_changes.append({'Country': country, 'Land Use': lu, 'Change %': pct})
+                
+                if trop_changes:
+                    df_trop = pd.DataFrame(trop_changes)
+                    
+                    # Focus on Forest, Crops, TreeCrops, Urban
+                    df_trop_main = df_trop[df_trop['Land Use'].isin(['Forest', 'Crops', 'TreeCrops', 'Urban', 'Grassland'])]
+                    
+                    fig_trop = px.bar(
+                        df_trop_main, x='Country', y='Change %', color='Land Use',
+                        barmode='group', title='Tropical Deforestation Sites: Projected Change 2020-2050 (%)',
+                        color_discrete_map={lu: COLORS[lu] for lu in LAND_CLASSES}
+                    )
+                    fig_trop.update_layout(template='plotly_white', height=500)
+                    st.plotly_chart(fig_trop, use_container_width=True)
+                    
     except Exception as e:
-        st.warning(f"Could not load data for global statistics: {e}")
-    
-    st.markdown("---")
-    
-    # Section 3: European Results
-    st.markdown("## 🇪🇺 European Land Use Projections to 2050")
-    
-    st.markdown("""
-    **Indicative summary for Europe:** Overall, forests are broadly stable-to-growing in some 
-    countries while a few countries show small declines. Cropland area moves only slightly, 
-    with modest increases in Spain but small declines in several others (e.g., Poland, Romania, Greece). 
-    Tree-crops and some traditional agricultural uses decline across most countries, whereas urban 
-    area steadily expands everywhere. Water bodies remain essentially constant and grassland shows 
-    mixed changes (small declines in some northern states, slight rises in countries like Italy/Romania).
-    """)
-    
-    st.info("📊 *European regional plots placeholder - add your Europe-specific visualizations here*")
-    
-    st.markdown("---")
-    
-    # Section 4: Decadal Changes
-    st.markdown("## 📈 Decadal Changes of Main Land Uses")
-    
-    st.markdown("""
-    **Key observations:** Urban land expansion is consistently positive for all countries. Forest cover 
-    is projected to increase in most countries, particularly Egypt, which shows extremely high positive 
-    change across all decades up to 2050. Conversely, Brazil, Australia, and Argentina are expected to 
-    see declines, raising concerns about deforestation and ecosystem service losses in these major 
-    forest-rich nations. Crops show mixed trends across countries. These changes underscore the dynamic 
-    impacts of climate, policy, and market forces on agricultural land use globally.
-    """)
-    
-    st.info("📊 *Decadal change plots placeholder - add your decade-by-decade visualizations here*")
-    
-    st.markdown("---")
-    
-    # Section 5: Tropical Deforestation
-    st.markdown("## 🌴 Tropical Deforestation Sites")
-    
-    st.markdown("""
-    **Major tropical forest areas** show ongoing declines through 2050. Cropland and tree-crop/plantation 
-    areas expand noticeably, while grassland and urban footprints generally rise as well, indicating 
-    conversion of natural land to agriculture and settlements.
-    """)
-    
-    st.info("📊 *Tropical deforestation plots placeholder - add your tropical region visualizations here*")
+        st.warning(f"Could not load data for visualizations: {e}")
 
 # ============================================================================
 # PAGE 3: COUNTRY EXPLORER
