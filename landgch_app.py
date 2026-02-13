@@ -500,12 +500,20 @@ def show_introduction_page():
         st.markdown("""
         | Component | Description |
         |-----------|-------------|
-        | **Historical Data** | HILDA+ v2.0 (2025) - annual, 1 km² resolution, 1960-2020 (Winkler et al.) |
-        | **State Boundaries** | Natural Earth (v5.1.1) |
+        | **Historical Data** | HILDA+ v2.0 (2025)¹ - annual, 1 km² resolution, 1960-2020 |
+        | **State Boundaries** | Natural Earth (v5.1.1)² |
         | **Method** | Time-varying Markov Chain model |
         | **Validation** | Multi-period (10/20/30 years) |
         | **Scenarios** | Multiple dietary and land use policy interventions |
         | **Resolution** | Country-level projections with 7 land-use classes |
+        """)
+        
+        # Footnotes
+        st.caption("""
+        ¹ Winkler, K., Fuchs, R., Rounsevell, M.D.A., Herold, M. (2021). Global land use changes are four times greater than previously estimated. *Nature Communications*, 12(1), 2501. [doi:10.1038/s41467-021-22702-2](https://doi.org/10.1038/s41467-021-22702-2)  
+        Winkler, K., Fuchs, R., Rounsevell, M.D.A., Herold, M. (2025). HILDA+ version 2.0: Global Land Use Change between 1960 and 2020 [dataset]. PANGAEA. [doi:10.1594/PANGAEA.974335](https://doi.org/10.1594/PANGAEA.974335)
+        
+        ² Natural Earth. (2021). Free vector and raster map data at 1:10m, 1:50m, and 1:110m scales. [naturalearthdata.com](https://www.naturalearthdata.com/)
         """)
     
     with col2:
@@ -513,10 +521,10 @@ def show_introduction_page():
         ### 🎯 Key Features of the Approach
         
         - **Spatial overlay**: HILDA+ with Natural Earth boundaries
-        - **Transition matrices**: 60 annual + 3 multi-year period matrices (10/20/30 years)
-        - **Time-Varying Markov Chain**: Captures non-linearities and heterogeneous transitions
-        - **Validation**: Hierarchical time-window strategy with hindcasting
-        - **Uncertainty**: Monte Carlo simulation (100 realizations) + bias correction
+        - **Transition matrices**: Computed by tracking pixel-level changes between years (60 annual and contemporary transition matrices for three multi-year periods: past 30, 20 and 10 years)
+        - **Time-Varying Markov Chain Model**: Projects land use dynamics from 2021 to 2050, using time-varying transition matrices to capture non-linearities and heterogeneous transitions in different national contexts
+        - **Validation**: Hierarchical time-window strategy, selecting transition matrix based on empirical validation performance (Recent 2010-2020, Medium 2000-2020, or Long 1990-2020); hindcasting validation with total area conservation constraints
+        - **Uncertainty analysis**: Monte Carlo simulation (100 stochastic realizations) with bias correction (SIMEX and de-noised Gaussian Hidden Markov Models)
         """)
     
     st.markdown("---")
@@ -974,6 +982,24 @@ def show_country_explorer():
     st.title("🔍 Country Explorer")
     st.markdown("Analyze land-use projections for individual countries")
     
+    # Scenario reference table at the top
+    st.markdown("### 📋 Available Scenarios")
+    st.markdown("*Dietary choices and land use policies strongly affect the area of land needed (or allowed). Select scenarios below to compare.*")
+    
+    scenario_df = pd.DataFrame([
+        {'Code': 'BAU', 'Name': 'Business As Usual', 'Description': 'Baseline model projections to 2050'},
+        {'Code': 'Fat', 'Name': 'High-meat diet', 'Description': 'More area to pasture and feed crops'},
+        {'Code': 'EAT', 'Name': 'The Lancet EAT diet', 'Description': 'Increased vegetables/legumes, reduced pasture'},
+        {'Code': 'NDC', 'Name': 'National Determined Contributions', 'Description': 'Forest gain targets, bioenergy crops'},
+        {'Code': 'Afforest', 'Name': 'Afforestation/Reforestation', 'Description': 'Forest protection policies'},
+        {'Code': 'Bioen', 'Name': 'Bioenergy expansion', 'Description': 'Biofuel mandates increase crop area'},
+        {'Code': 'Yieldint', 'Name': 'Yield intensification', 'Description': 'Higher yields reduce land need'},
+        {'Code': 'Landretir', 'Name': 'Land retirement', 'Description': 'Marginal cropland to forest'},
+    ])
+    st.dataframe(scenario_df, use_container_width=True, hide_index=True)
+    
+    st.markdown("---")
+    
     # Load BAU data to get country list
     df_bau = load_data('bau')
     
@@ -1012,11 +1038,11 @@ def show_country_explorer():
         
         st.markdown("---")
         
-        # Scenario selection for comparison
+        # Scenario selection for comparison - ALL 8 scenarios
         st.markdown("### 📊 Compare Scenarios")
         compare_scenarios = st.multiselect(
             "Select scenarios to compare",
-            ['BAU', 'Fat', 'EAT', 'NDC'],
+            ['BAU', 'Fat', 'EAT', 'NDC', 'Afforest', 'Bioen', 'Yieldint', 'Landretir'],
             default=['BAU']
         )
     

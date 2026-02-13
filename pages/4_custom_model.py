@@ -953,3 +953,97 @@ if 'base_results' in st.session_state:
                 "text/csv",
                 width="stretch"
             )
+
+# ============================================================================
+# SCENARIO COMPARISON CHART (FAT vs EAT vs NDC)
+# ============================================================================
+
+st.markdown("---")
+st.markdown("""
+<div class='section-header'>
+    <h3>📊 Main Scenarios Comparison: FAT vs EAT vs NDC</h3>
+    <p>Reference comparison of the three main dietary/policy scenarios at 2050</p>
+</div>
+""", unsafe_allow_html=True)
+
+# Create comparison data using multipliers applied to a baseline
+# Using global average baseline proportions for illustration
+baseline_global = {
+    'Crops': 15000000,      # km²
+    'TreeCrops': 3000000,
+    'Forest': 40000000,
+    'Grassland': 35000000,
+    'Urban': 2000000,
+    'Water': 5000000,
+    'Other': 30000000
+}
+
+comparison_scenarios = ['Fat', 'EAT', 'NDC']
+scenario_colors = {'Fat': '#d62728', 'EAT': '#2ca02c', 'NDC': '#1f77b4'}
+
+# Calculate 2050 values for each scenario
+comparison_data = []
+for scen in comparison_scenarios:
+    mults = SCENARIOS[scen]['multipliers']
+    for lu in DEFAULT_LAND_USES:
+        val_2050 = baseline_global[lu] * mults[lu]
+        comparison_data.append({
+            'Scenario': scen,
+            'Land Use': lu,
+            'Area 2050 (km²)': val_2050
+        })
+
+df_compare = pd.DataFrame(comparison_data)
+
+# Create grouped bar chart
+fig_compare = go.Figure()
+
+for scen in comparison_scenarios:
+    df_scen = df_compare[df_compare['Scenario'] == scen]
+    fig_compare.add_trace(go.Bar(
+        name=SCENARIOS[scen]['name'],
+        x=df_scen['Land Use'],
+        y=df_scen['Area 2050 (km²)'],
+        marker_color=scenario_colors[scen]
+    ))
+
+fig_compare.update_layout(
+    barmode='group',
+    title='Comparative Land Area by Class in 2050 — FAT vs EAT vs NDC (Global)',
+    xaxis_title='Land Use Type',
+    yaxis_title='Area (km²)',
+    template='plotly_white',
+    height=500,
+    legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+)
+
+st.plotly_chart(fig_compare, use_container_width=True)
+
+# Add percent comparison
+st.markdown("### Percent Composition Comparison")
+
+fig_pct = go.Figure()
+
+for scen in comparison_scenarios:
+    df_scen = df_compare[df_compare['Scenario'] == scen]
+    total = df_scen['Area 2050 (km²)'].sum()
+    pct_values = (df_scen['Area 2050 (km²)'] / total * 100).values
+    
+    fig_pct.add_trace(go.Bar(
+        name=SCENARIOS[scen]['name'],
+        x=df_scen['Land Use'],
+        y=pct_values,
+        marker_color=scenario_colors[scen]
+    ))
+
+fig_pct.update_layout(
+    barmode='group',
+    title='Comparative Land Composition (%) in 2050 — FAT vs EAT vs NDC',
+    xaxis_title='Land Use Type',
+    yaxis_title='Share of Global Land Area (%)',
+    template='plotly_white',
+    height=500,
+    legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+)
+
+st.plotly_chart(fig_pct, use_container_width=True)
