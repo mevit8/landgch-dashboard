@@ -389,29 +389,6 @@ def main():
         st.title("🌍 LandGCH Dashboard")
         st.markdown("---")
         
-        # Scenarios expander
-        with st.expander("📋 Scenarios", expanded=False):
-            st.markdown("""
-            Dietary choices and land use policies strongly affect the area of land needed (or allowed). 
-            We have developed the following set of indicative scenarios:
-            """)
-            
-            scenario_table = """
-| Code | Name | Description |
-|------|------|-------------|
-| BAU | Business As Usual | Baseline model projections to 2050 |
-| Fat | High-meat diet | More area to pasture and feed crops |
-| EAT | The Lancet EAT diet | Increased vegetables/legumes, reduced pasture |
-| NDC | National Determined Contributions | Forest gain targets, bioenergy crops |
-| Afforest | Afforestation/Reforestation | Forest protection policies |
-| Bioen | Bioenergy expansion | Biofuel mandates increase crop area |
-| Yieldint | Yield intensification | Higher yields reduce land need |
-| Landretir | Land retirement | Marginal cropland to forest |
-"""
-            st.markdown(scenario_table)
-        
-        st.markdown("---")
-        
         st.markdown("""
         **About LandGCH**
         
