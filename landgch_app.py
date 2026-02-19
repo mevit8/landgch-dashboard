@@ -1,12 +1,4 @@
-"""
-LandGCH Interactive Dashboard
-==============================
-A Streamlit application for exploring global land-use projections (2020-2050)
-using HILDA+ data and Time-varying Markov Chain models.
-
-Author: Angelos  
-Date: December 2024
-"""
+"""LandGCH Interactive Dashboard - Global land-use projections (2020-2050)"""
 
 import streamlit as st
 import pandas as pd
@@ -18,107 +10,44 @@ from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
 
-# ============================================================================
-# PAGE CONFIGURATION
-# ============================================================================
+# Color palettes
+LAND_USE_COLORS = ['#5B9BD5', '#70AD47', '#2E7D32', '#ED7D31', '#7F7F7F', '#4FC3F7', '#BDBDBD']
+SCENARIO_COLOR_LIST = ['#7F7F7F', '#E57373', '#81C784', '#64B5F6', '#4DB6AC', '#BA68C8', '#FFD54F', '#A1887F']
+px.defaults.color_discrete_sequence = LAND_USE_COLORS
 
-st.set_page_config(
-    page_title="LandGCH Dashboard",
-    page_icon="🌍",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="LandGCH Dashboard", page_icon="🌍", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS - Modern styling with logo support
+# Minimal CSS - only essential overrides
 st.markdown("""
 <style>
-    /* Hide auto-generated navigation */
-    [data-testid="stSidebarNav"] {
-        display: none;
-    }
-    
-    /* Global styling */
-    .stApp { background-color: #F8FAFC; }
-    .block-container { padding-top: 1.5rem !important; max-width: 1200px; }
-
-    /* Headers */
-    h1 { font-size: 1.7rem !important; font-weight: 800; color: #0F172A; margin-bottom: 0.5rem !important; }
-    h2 { font-size: 1.3rem !important; font-weight: 700; color: #1E293B; margin-top: 1rem !important; border-bottom: none !important; }
-    h3 { font-size: 1.0rem !important; font-weight: 600; color: #475569; }
-
-    /* Sidebar */
-    [data-testid="stSidebar"] { 
-        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
-        border-right: 2px solid #e0e0e0;
-    }
-    
-    [data-testid="stSidebar"] img {
-        margin-bottom: 1.5rem;
-        border-bottom: 2px solid #e0e0e0;
-        padding-bottom: 1rem;
-    }
-    
-    /* Compact inputs */
-    .stNumberInput input { font-size: 0.85rem !important; padding: 0.4rem !important; }
-    .element-container { margin-bottom: 0.5rem !important; }
-    
-    /* Navigation styling */
-    [data-testid="stSidebar"] .stRadio > div {
-        background: linear-gradient(180deg, #f0f2f6 0%, #ffffff 100%);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 2px solid #e0e0e0;
-    }
-    
-    [data-testid="stSidebar"] .stRadio label {
-        font-weight: 600;
-        font-size: 1rem;
-        padding: 0.5rem;
-    }
-    
-    /* Page links styling */
-    [data-testid="stSidebar"] a[data-testid="stPageLink"] {
-        display: block;
-        padding: 0.75rem 1rem;
-        margin-bottom: 0.5rem;
-        border-radius: 0.5rem;
-        background-color: rgba(31, 119, 180, 0.1);
-        border: 2px solid rgba(31, 119, 180, 0.2);
-        color: #1f77b4;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    
-    [data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
-        background-color: rgba(31, 119, 180, 0.2);
-        border-color: rgba(31, 119, 180, 0.4);
-    }
-    
-    [data-testid="stSidebar"] a[data-testid="stPageLink"][aria-current="page"] {
-        background-color: #1f77b4;
-        color: white;
-        border-color: #1f77b4;
-    }
+    [data-testid="stSidebarNav"] { display: none; }
+    section[data-testid="stSidebar"] > div:first-child { padding-top: 1rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================================================
-# CONSTANTS & CONFIGURATION
-# ============================================================================
-
-# Land use classes
+# CONSTANTS
 LAND_CLASSES = ['Crops', 'TreeCrops', 'Forest', 'Grassland', 'Urban', 'Water', 'Other']
 
-# Color scheme (colorblind-friendly)
 COLORS = {
-    'Crops': '#E69F00',      # Orange
-    'TreeCrops': '#009E73',  # Green
-    'Forest': '#0072B2',     # Blue
-    'Grassland': '#D55E00',  # Red-orange
-    'Urban': '#CC79A7',      # Pink
-    'Water': '#56B4E9',      # Sky blue
-    'Other': '#999999'       # Gray
+    'Crops': '#5B9BD5',      # Blue
+    'TreeCrops': '#70AD47',  # Green
+    'Forest': '#2E7D32',     # Dark Green
+    'Grassland': '#ED7D31',  # Orange
+    'Urban': '#7F7F7F',      # Gray
+    'Water': '#4FC3F7',      # Light Blue
+    'Other': '#BDBDBD'       # Light Gray
+}
+
+# Scenario colors - Distinguishable but harmonious
+SCENARIO_COLORS = {
+    'BAU': '#7F7F7F',        # Gray
+    'Fat': '#E57373',        # Soft Red
+    'EAT': '#81C784',        # Soft Green
+    'NDC': '#64B5F6',        # Soft Blue
+    'Afforest': '#4DB6AC',   # Teal
+    'Bioen': '#BA68C8',      # Purple
+    'Yieldint': '#FFD54F',   # Amber
+    'Landretir': '#A1887F',  # Brown
 }
 
 # Scenario definitions - Full set with codes
@@ -127,7 +56,7 @@ SCENARIOS = {
         'name': 'Business As Usual',
         'code': 'BAU',
         'description': 'The baseline model land use annual projections to 2050.',
-        'color': '#666666'
+        'color': '#7F7F7F'
     },
     'Fat': {
         'name': 'High-meat diet',
@@ -137,7 +66,7 @@ SCENARIOS = {
             'Crops': 1.06, 'TreeCrops': 1.02, 'Forest': 0.97,
             'Grassland': 1.12, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
         },
-        'color': '#d62728'
+        'color': '#E57373'
     },
     'EAT': {
         'name': 'The Lancet EAT diet',
@@ -147,7 +76,7 @@ SCENARIOS = {
             'Crops': 0.90, 'TreeCrops': 0.97, 'Forest': 1.08,
             'Grassland': 0.82, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98
         },
-        'color': '#2ca02c'
+        'color': '#81C784'
     },
     'NDC': {
         'name': 'National Determined Contributions',
@@ -157,7 +86,7 @@ SCENARIOS = {
             'Crops': 1.03, 'TreeCrops': 1.05, 'Forest': 1.07,
             'Grassland': 0.98, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
         },
-        'color': '#17becf'
+        'color': '#64B5F6'
     },
     'Afforest': {
         'name': 'Afforestation/Reforestation',
@@ -167,7 +96,7 @@ SCENARIOS = {
             'Crops': 1.01, 'TreeCrops': 1.02, 'Forest': 1.07,
             'Grassland': 0.99, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
         },
-        'color': '#9467bd'
+        'color': '#4DB6AC'
     },
     'Bioen': {
         'name': 'Bioenergy/energy crop expansion',
@@ -177,7 +106,7 @@ SCENARIOS = {
             'Crops': 1.03, 'TreeCrops': 1.05, 'Forest': 1.03,
             'Grassland': 0.97, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.95
         },
-        'color': '#8c564b'
+        'color': '#BA68C8'
     },
     'Yieldint': {
         'name': 'Yield improvement/intensification',
@@ -187,7 +116,7 @@ SCENARIOS = {
             'Crops': 0.90, 'TreeCrops': 0.97, 'Forest': 1.03,
             'Grassland': 0.83, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98
         },
-        'color': '#e377c2'
+        'color': '#FFD54F'
     },
     'Landretir': {
         'name': 'Land retirement/Carbon pricing',
@@ -197,13 +126,13 @@ SCENARIOS = {
             'Crops': 0.91, 'TreeCrops': 0.96, 'Forest': 1.07,
             'Grassland': 0.82, 'Urban': 1.00, 'Water': 1.00, 'Other': 0.98
         },
-        'color': '#7f7f7f'
+        'color': '#A1887F'
     }
 }
 
-# ============================================================================
+
 # DATA PATHS (USER MUST UPDATE THESE)
-# ============================================================================
+
 
 # NOTE: Users need to update these paths to point to their actual data files
 # Using forward slashes for cross-platform compatibility (Windows/Linux)
@@ -212,11 +141,15 @@ DATA_PATHS = {
     'fat': "data/7.diets/fat/ALL_COUNTRIES_fat_annual_projections_2020_2050.csv",
     'eat': "data/7.diets/eat/ALL_COUNTRIES_eat_annual_projections_2020_2050.csv",
     'ndc': "data/7.diets/ndc/ALL_COUNTRIES_ndc_annual_projections_2020_2050.csv",
+    'afforest': "data/7.diets/afforest/ALL_COUNTRIES_afforest_annual_projections_2020_2050.csv",
+    'bioen': "data/7.diets/bioen/ALL_COUNTRIES_bioen_annual_projections_2020_2050.csv",
+    'yieldint': "data/7.diets/yieldint/ALL_COUNTRIES_yieldint_annual_projections_2020_2050.csv",
+    'landretir': "data/7.diets/landretir/ALL_COUNTRIES_landretir_annual_projections_2020_2050.csv",
 }
 
-# ============================================================================
+
 # HELPER FUNCTIONS
-# ============================================================================
+
 
 @st.cache_data
 def load_data(scenario='bau'):
@@ -374,16 +307,22 @@ def create_2050_comparison_bar(country_dfs, country_code):
     
     return fig
 
-# ============================================================================
+
 # MAIN APP STRUCTURE
-# ============================================================================
+
 
 def main():
     """Main application logic"""
     
     # Sidebar with logo and info
     with st.sidebar:
-        # Logo first
+        # AERIA logo first
+        try:
+            st.image("assets/final_logo.svg", width=180)
+        except:
+            pass  # Skip if logo not found
+        
+        # GCH logo
         st.image("https://unsdsn.globalclimatehub.org/wp-content/uploads/2022/09/logo.png", width=200)
         
         st.title("🌍 LandGCH Dashboard")
@@ -444,9 +383,9 @@ def show_custom_model_tab():
     st.info("Click the button above to access the full Custom Model Builder with transition matrix input and scenario adjustments.")
 
 
-# ============================================================================
+
 # PAGE 1: INTRODUCTION
-# ============================================================================
+
 
 def show_introduction_page():
     """Introduction page with model overview"""
@@ -575,9 +514,9 @@ def show_introduction_page():
     st.markdown("---")
     st.info("☝️ Use the tabs above to explore **Global Results**, **Country Explorer**, or **Scenario Comparison**")
 
-# ============================================================================
+
 # PAGE 2: GLOBAL RESULTS
-# ============================================================================
+
 
 def show_global_results():
     """Global results page with validation and projections"""
@@ -949,9 +888,9 @@ def show_global_results():
     except Exception as e:
         st.warning(f"Could not load data for visualizations: {e}")
 
-# ============================================================================
+
 # PAGE 3: COUNTRY EXPLORER
-# ============================================================================
+
 
 def show_country_explorer():
     """Country-level analysis page"""
@@ -1089,9 +1028,9 @@ def show_country_explorer():
         with st.expander("📋 View Raw Data"):
             st.dataframe(country_df_bau[['Year'] + LAND_CLASSES], use_container_width=True)
 
-# ============================================================================
+
 # PAGE 4: SCENARIO COMPARISON
-# ============================================================================
+
 
 def show_scenario_comparison():
     """Multi-country scenario comparison"""
@@ -1237,9 +1176,9 @@ def show_scenario_comparison():
         if summary_data:
             st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
 
-# ============================================================================
+
 # RUN APP
-# ============================================================================
+
 
 if __name__ == "__main__":
     main()

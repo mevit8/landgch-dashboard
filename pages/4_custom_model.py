@@ -1,16 +1,10 @@
-"""
-Custom Model Builder - Two-Stage System
-Stage 1: Base Projection (with transition matrix)
-Stage 2: Scenario Adjustment (with multipliers)
-"""
+"""Custom Model Builder - Two-Stage Projection System"""
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-
-# Import from core module
 import sys
 from pathlib import Path
 
@@ -24,6 +18,36 @@ from core.custom_projection_engine import (
     parse_matrix_from_csv_string,
     parse_matrix_from_text
 )
+
+# ============================================================================
+# GLOBAL PLOTLY COLOR CONFIGURATION
+# ============================================================================
+
+# Color scheme - Professional palette (consistent with main app)
+COLORS = {
+    'Crops': '#5B9BD5',      # Blue
+    'TreeCrops': '#70AD47',  # Green
+    'Forest': '#2E7D32',     # Dark Green
+    'Grassland': '#ED7D31',  # Orange
+    'Urban': '#7F7F7F',      # Gray
+    'Water': '#4FC3F7',      # Light Blue
+    'Other': '#BDBDBD'       # Light Gray
+}
+
+SCENARIO_COLORS = {
+    'BAU': '#7F7F7F',        # Gray
+    'Fat': '#E57373',        # Soft Red
+    'EAT': '#81C784',        # Soft Green
+    'NDC': '#64B5F6',        # Soft Blue
+    'Afforest': '#4DB6AC',   # Teal
+    'Bioen': '#BA68C8',      # Purple
+    'Yieldint': '#FFD54F',   # Amber
+    'Landretir': '#A1887F',  # Brown
+}
+
+# Set global Plotly defaults
+LAND_USE_COLORS = list(COLORS.values())
+px.defaults.color_discrete_sequence = LAND_USE_COLORS
 
 # ============================================================================
 # SCENARIO DEFINITIONS
@@ -85,117 +109,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Minimal CSS
 st.markdown("""
 <style>
-    /* HIDE the auto-generated navigation */
-    [data-testid="stSidebarNav"] {
-        display: none;
-    }
-    
-    /* Better headers */
-    .main h1 {
-        color: #1f77b4;
-        font-weight: 600;
-        padding-bottom: 1rem;
-        border-bottom: 3px solid #1f77b4;
-    }
-    
-    .main h2 {
-        color: #2c3e50;
-        font-weight: 600;
-        margin-top: 2rem;
-        padding: 0.5rem 0;
-    }
-    
-    .main h3 {
-        color: #34495e;
-        font-weight: 500;
-    }
-    
-    /* Better info boxes */
-    .stAlert {
-        border-radius: 0.5rem;
-    }
-    
-    /* Better buttons */
-    .stButton>button {
-        border-radius: 0.5rem;
-        font-weight: 500;
-    }
-    
-    /* Better metrics */
-    [data-testid="stMetricValue"] {
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
-    
-    /* Section dividers */
-    .section-header {
-        background: linear-gradient(90deg, #f0f2f6 0%, #ffffff 100%);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1.5rem 0 1rem 0;
-        border-left: 4px solid #1f77b4;
-    }
-    
-    .section-header h3 {
-        margin: 0;
-        color: #1f77b4;
-    }
-    
-    .section-header p {
-        margin: 0.5rem 0 0 0;
-        color: #666;
-        font-size: 0.9rem;
-    }
-    
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
-        border-right: 2px solid #e0e0e0;
-    }
-    
-    [data-testid="stSidebar"] img {
-        margin-bottom: 1.5rem;
-        border-bottom: 2px solid #e0e0e0;
-        padding-bottom: 1rem;
-    }
-    
-    [data-testid="stSidebar"] h3 {
-        color: #1f77b4;
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e0e0e0;
-    }
-    
-    /* Custom navigation links styling */
-    [data-testid="stSidebar"] a[data-testid="stPageLink"] {
-        display: block;
-        padding: 0.75rem 1rem;
-        margin-bottom: 0.5rem;
-        border-radius: 0.5rem;
-        background-color: rgba(31, 119, 180, 0.1);
-        border: 2px solid rgba(31, 119, 180, 0.2);
-        color: #1f77b4;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    
-    [data-testid="stSidebar"] a[data-testid="stPageLink"]:hover {
-        background-color: rgba(31, 119, 180, 0.2);
-        border-color: rgba(31, 119, 180, 0.4);
-    }
-    
-    [data-testid="stSidebar"] a[data-testid="stPageLink"][aria-current="page"] {
-        background-color: #1f77b4;
-        color: white;
-        border-color: #1f77b4;
-    }
+    [data-testid="stSidebarNav"] { display: none; }
+    section[data-testid="stSidebar"] > div:first-child { padding-top: 1rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -213,7 +131,13 @@ st.markdown("""
 
 # Sidebar Progress Tracker
 with st.sidebar:
-    # Logo FIRST
+    # AERIA logo first
+    try:
+        st.image("assets/final_logo.svg", width=180)
+    except:
+        pass  # Skip if logo not found
+    
+    # GCH Logo
     st.image("https://unsdsn.globalclimatehub.org/wp-content/uploads/2022/09/logo.png", width=200)
     
     st.title("🌍 LandGCH Dashboard")
@@ -966,84 +890,126 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Create comparison data using multipliers applied to a baseline
-# Using global average baseline proportions for illustration
-baseline_global = {
-    'Crops': 15000000,      # km²
-    'TreeCrops': 3000000,
-    'Forest': 40000000,
-    'Grassland': 35000000,
-    'Urban': 2000000,
-    'Water': 5000000,
-    'Other': 30000000
+# Data paths for scenarios
+SCENARIO_DATA_PATHS = {
+    'Fat': root_dir / "data/7.diets/fat/ALL_COUNTRIES_fat_annual_projections_2020_2050.csv",
+    'EAT': root_dir / "data/7.diets/eat/ALL_COUNTRIES_eat_annual_projections_2020_2050.csv",
+    'NDC': root_dir / "data/7.diets/ndc/ALL_COUNTRIES_ndc_annual_projections_2020_2050.csv",
 }
 
 comparison_scenarios = ['Fat', 'EAT', 'NDC']
-scenario_colors = {'Fat': '#d62728', 'EAT': '#2ca02c', 'NDC': '#1f77b4'}
 
-# Calculate 2050 values for each scenario
+# Load actual 2050 data from CSV files
 comparison_data = []
-for scen in comparison_scenarios:
-    mults = SCENARIOS[scen]['multipliers']
-    for lu in DEFAULT_LAND_USES:
-        val_2050 = baseline_global[lu] * mults[lu]
-        comparison_data.append({
-            'Scenario': scen,
-            'Land Use': lu,
-            'Area 2050 (km²)': val_2050
-        })
-
-df_compare = pd.DataFrame(comparison_data)
-
-# Create grouped bar chart
-fig_compare = go.Figure()
+data_loaded = False
 
 for scen in comparison_scenarios:
-    df_scen = df_compare[df_compare['Scenario'] == scen]
-    fig_compare.add_trace(go.Bar(
-        name=SCENARIOS[scen]['name'],
-        x=df_scen['Land Use'],
-        y=df_scen['Area 2050 (km²)'],
-        marker_color=scenario_colors[scen]
-    ))
+    file_path = SCENARIO_DATA_PATHS[scen]
+    try:
+        if file_path.exists():
+            df = pd.read_csv(file_path)
+            df_2050 = df[df['Year'] == 2050]
+            
+            for lu in DEFAULT_LAND_USES:
+                if lu in df_2050.columns:
+                    val_2050 = df_2050[lu].sum()  # Global total
+                    comparison_data.append({
+                        'Scenario': scen,
+                        'Land Use': lu,
+                        'Area 2050 (km²)': val_2050
+                    })
+            data_loaded = True
+    except Exception as e:
+        st.warning(f"Could not load {scen} data: {e}")
 
-fig_compare.update_layout(
-    barmode='group',
-    title='Comparative Land Area by Class in 2050 — FAT vs EAT vs NDC (Global)',
-    xaxis_title='Land Use Type',
-    yaxis_title='Area (km²)',
-    template='plotly_white',
-    height=500,
-    legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
-)
-
-st.plotly_chart(fig_compare, use_container_width=True)
-
-# Add percent comparison
-st.markdown("### Percent Composition Comparison")
-
-fig_pct = go.Figure()
-
-for scen in comparison_scenarios:
-    df_scen = df_compare[df_compare['Scenario'] == scen]
-    total = df_scen['Area 2050 (km²)'].sum()
-    pct_values = (df_scen['Area 2050 (km²)'] / total * 100).values
+# Fallback to multiplier-based estimates if no data
+if not data_loaded or len(comparison_data) == 0:
+    st.info("📊 Using estimated values based on BAU × scenario multipliers (actual data files not found)")
     
-    fig_pct.add_trace(go.Bar(
-        name=SCENARIOS[scen]['name'],
-        x=df_scen['Land Use'],
-        y=pct_values,
-        marker_color=scenario_colors[scen]
-    ))
+    # Try to load BAU for baseline
+    bau_path = root_dir / "data/7.diets/bau/1.ALL_COUNTRIES_annual_projections_2020_2050.csv"
+    baseline_global = {}
+    
+    if bau_path.exists():
+        try:
+            df_bau = pd.read_csv(bau_path)
+            df_bau_2050 = df_bau[df_bau['Year'] == 2050]
+            for lu in DEFAULT_LAND_USES:
+                if lu in df_bau_2050.columns:
+                    baseline_global[lu] = df_bau_2050[lu].sum()
+        except:
+            pass
+    
+    # Fallback baseline if BAU not available
+    if not baseline_global:
+        baseline_global = {
+            'Crops': 15000000, 'TreeCrops': 3000000, 'Forest': 40000000,
+            'Grassland': 35000000, 'Urban': 2000000, 'Water': 5000000, 'Other': 30000000
+        }
+    
+    comparison_data = []
+    for scen in comparison_scenarios:
+        mults = SCENARIOS[scen]['multipliers']
+        for lu in DEFAULT_LAND_USES:
+            val_2050 = baseline_global.get(lu, 0) * mults[lu]
+            comparison_data.append({
+                'Scenario': scen,
+                'Land Use': lu,
+                'Area 2050 (km²)': val_2050
+            })
 
-fig_pct.update_layout(
-    barmode='group',
-    title='Comparative Land Composition (%) in 2050 — FAT vs EAT vs NDC',
-    xaxis_title='Land Use Type',
-    yaxis_title='Share of Global Land Area (%)',
-    template='plotly_white',
-    height=500,
-    legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
-)
-
-st.plotly_chart(fig_pct, use_container_width=True)
+if comparison_data:
+    df_compare = pd.DataFrame(comparison_data)
+    
+    # Create grouped bar chart
+    fig_compare = go.Figure()
+    
+    for scen in comparison_scenarios:
+        df_scen = df_compare[df_compare['Scenario'] == scen]
+        fig_compare.add_trace(go.Bar(
+            name=SCENARIOS[scen]['name'],
+            x=df_scen['Land Use'],
+            y=df_scen['Area 2050 (km²)'],
+            marker_color=SCENARIO_COLORS[scen]
+        ))
+    
+    fig_compare.update_layout(
+        barmode='group',
+        title='Comparative Land Area by Class in 2050 — FAT vs EAT vs NDC (Global)',
+        xaxis_title='Land Use Type',
+        yaxis_title='Area (km²)',
+        template='plotly_white',
+        height=500,
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+    
+    st.plotly_chart(fig_compare, use_container_width=True)
+    
+    # Add percent comparison
+    st.markdown("### Percent Composition Comparison")
+    
+    fig_pct = go.Figure()
+    
+    for scen in comparison_scenarios:
+        df_scen = df_compare[df_compare['Scenario'] == scen]
+        total = df_scen['Area 2050 (km²)'].sum()
+        pct_values = (df_scen['Area 2050 (km²)'] / total * 100).values
+        
+        fig_pct.add_trace(go.Bar(
+            name=SCENARIOS[scen]['name'],
+            x=df_scen['Land Use'],
+            y=pct_values,
+            marker_color=SCENARIO_COLORS[scen]
+        ))
+    
+    fig_pct.update_layout(
+        barmode='group',
+        title='Comparative Land Composition (%) in 2050 — FAT vs EAT vs NDC',
+        xaxis_title='Land Use Type',
+        yaxis_title='Share of Global Land Area (%)',
+        template='plotly_white',
+        height=500,
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+    
+    st.plotly_chart(fig_pct, use_container_width=True)
